@@ -89,6 +89,29 @@
       ]
     },
     {
+      "name": "Chat",
+      "item": [
+        {
+          "name": "Perguntar (RAG)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/chat/",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{access_token}}" }]
+            },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"Me recomenda um jogo de RPG de mundo aberto\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "Games",
       "item": [
         {
