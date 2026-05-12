@@ -1,0 +1,232 @@
+{
+  "info": {
+    "name": "GameRAG API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000"
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    },
+    {
+      "key": "refresh_token",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Registrar usuário",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/auth/register/",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"joao\",\n  \"email\": \"joao@email.com\",\n  \"password\": \"senha1234\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "pm.collectionVariables.set('access_token', res.access);",
+                  "pm.collectionVariables.set('refresh_token', res.refresh);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/auth/login/",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin1234\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Renovar token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "pm.collectionVariables.set('access_token', res.access);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/auth/token/refresh/",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh\": \"{{refresh_token}}\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Games",
+      "item": [
+        {
+          "name": "Listar jogos",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/games/",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{access_token}}" }]
+            }
+          }
+        },
+        {
+          "name": "Buscar jogos (search)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/games/?search=witcher",
+              "host": ["{{base_url}}"],
+              "path": ["api", "games", ""],
+              "query": [{ "key": "search", "value": "witcher" }]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{access_token}}" }]
+            }
+          }
+        },
+        {
+          "name": "Ordenar jogos",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/games/?ordering=-rating",
+              "host": ["{{base_url}}"],
+              "path": ["api", "games", ""],
+              "query": [{ "key": "ordering", "value": "-rating" }]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{access_token}}" }]
+            }
+          }
+        },
+        {
+          "name": "Detalhar jogo",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/games/1/",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{access_token}}" }]
+            }
+          }
+        },
+        {
+          "name": "Cadastrar jogo",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/games/",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{access_token}}" }]
+            },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"The Witcher 3\",\n  \"description\": \"RPG de mundo aberto épico ambientado num universo de fantasia sombria.\",\n  \"genre\": \"RPG\",\n  \"platform\": \"PC\",\n  \"price\": \"99.90\",\n  \"developer\": \"CD Projekt Red\",\n  \"publisher\": \"CD Projekt\",\n  \"release_date\": \"2015-05-19\",\n  \"tags\": [\"RPG\", \"Open World\", \"Fantasy\"],\n  \"rating\": \"9.8\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Atualizar jogo (PUT)",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/api/games/1/",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{access_token}}" }]
+            },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"The Witcher 3\",\n  \"description\": \"RPG de mundo aberto épico ambientado num universo de fantasia sombria.\",\n  \"genre\": \"RPG\",\n  \"platform\": \"PC\",\n  \"price\": \"79.90\",\n  \"developer\": \"CD Projekt Red\",\n  \"publisher\": \"CD Projekt\",\n  \"release_date\": \"2015-05-19\",\n  \"tags\": [\"RPG\", \"Open World\", \"Fantasy\"],\n  \"rating\": \"9.8\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Atualizar jogo (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "url": "{{base_url}}/api/games/1/",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{access_token}}" }]
+            },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": \"79.90\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Remover jogo",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/games/1/",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{access_token}}" }]
+            }
+          }
+        },
+        {
+          "name": "Jogos similares",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/games/1/similar/?limit=5",
+              "host": ["{{base_url}}"],
+              "path": ["api", "games", "1", "similar", ""],
+              "query": [{ "key": "limit", "value": "5" }]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{access_token}}" }]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
