@@ -354,7 +354,30 @@ Para adicionar uma nova origem, edite `CORS_ALLOWED_ORIGINS` em `backend/GameRAG
 
 Disponível em `http://localhost:8000/admin/`.
 
-O model `Game` está registrado com:
-- Listagem por: título, gênero, plataforma, desenvolvedor, preço, rating, data de lançamento
-- Filtros: gênero, plataforma
-- Busca: título, desenvolvedor, publisher
+Interface administrativa com o tema **Jazzmin** (`django-jazzmin`).
+
+### `Game`
+
+| Configuração | Valor |
+|---|---|
+| `list_display` | title, genre, platform, developer, price, rating, release_date |
+| `list_filter` | genre, platform |
+| `search_fields` | title, developer, publisher |
+| `ordering` | title |
+| `inlines` | `GameReviewInline` — exibe as avaliações do jogo no mesmo formulário |
+
+### `GameReview`
+
+| Configuração | Valor |
+|---|---|
+| `list_display` | game, user, rating, created_at |
+| `list_filter` | rating |
+| `search_fields` | game__title, user__username |
+
+### `User`
+
+| Configuração | Valor |
+|---|---|
+| `list_display` | username, email, first_name, last_name, is_staff, is_active, date_joined |
+| `list_filter` | is_staff, is_active, is_superuser |
+| `search_fields` | username, email, first_name, last_name |
