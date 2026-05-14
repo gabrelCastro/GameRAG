@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 import os
 from pathlib import Path
 
+from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -21,16 +22,58 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env')
 
 
+def env_bool(name, default=False):
+    raw_value = os.environ.get(name)
+    if raw_value is None:
+        return default
+    return raw_value.strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
+def env_list(name, default=None):
+    raw_value = os.environ.get(name)
+    if raw_value is None:
+        return default or []
+    return [item.strip() for item in raw_value.split(',') if item.strip()]
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-ig+zuktq+o9l5rbdwwu9vgah@veh1&o$odt_0&*v0g$+6*n-yw'
+SECRET_KEY = os.environ.get('SECRET_KEY', '').strip()
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env_bool('DEBUG', False)
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost').split(',')
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = 'django-insecure-local-dev-only-change-me'
+    else:
+        raise ImproperlyConfigured(
+            'SECRET_KEY não configurada. Defina uma chave segura no ambiente antes de iniciar a aplicação.'
+        )
+
+if not DEBUG and SECRET_KEY.startswith('django-insecure-'):
+    raise ImproperlyConfigured(
+        'SECRET_KEY insegura para produção. Gere uma chave longa e aleatória sem o prefixo django-insecure-.'
+    )
+
+ALLOWED_HOSTS = env_list(
+    'ALLOWED_HOSTS',
+    ['localhost', '127.0.0.1'] if DEBUG else [],
+)
+
+if not DEBUG and not ALLOWED_HOSTS:
+    raise ImproperlyConfigured(
+        'ALLOWED_HOSTS não configurado. Defina ao menos um host permitido para produção.'
+    )
+
+SECURE_SSL_REDIRECT = env_bool('SECURE_SSL_REDIRECT', not DEBUG)
+SESSION_COOKIE_SECURE = env_bool('SESSION_COOKIE_SECURE', not DEBUG)
+CSRF_COOKIE_SECURE = env_bool('CSRF_COOKIE_SECURE', not DEBUG)
+SECURE_HSTS_SECONDS = int(os.environ.get('SECURE_HSTS_SECONDS', 31536000 if not DEBUG else 0))
+SECURE_HSTS_INCLUDE_SUBDOMAINS = env_bool('SECURE_HSTS_INCLUDE_SUBDOMAINS', not DEBUG)
+SECURE_HSTS_PRELOAD = env_bool('SECURE_HSTS_PRELOAD', not DEBUG)
 
 
 # Application definition
@@ -61,10 +104,10 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:3000',
-    'http://localhost:5173',
-]
+CORS_ALLOWED_ORIGINS = env_list(
+    'CORS_ALLOWED_ORIGINS',
+    ['http://localhost:3000', 'http://localhost:5173'] if DEBUG else [],
+)
 
 ROOT_URLCONF = 'GameRAG.urls'
 
@@ -155,4 +198,11 @@ SIMPLE_JWT = {
 }
 
 # OpenAI
-OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
+EMBEDDINGS_ENABLED = env_bool('EMBEDDINGS_ENABLED', True)
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '').strip()
+
+if EMBEDDINGS_ENABLED and OPENAI_API_KEY in {'', 'your-api-key-here'}:
+    raise ImproperlyConfigured(
+        'OPENAI_API_KEY não configurada. Defina uma chave válida no backend/.env '
+        'ou use EMBEDDINGS_ENABLED=false para iniciar a aplicação sem embeddings.'
+    )

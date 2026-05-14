@@ -33,6 +33,25 @@ class GameViewSet(viewsets.ModelViewSet):
     def perform_destroy(self, instance):
         self._service.delete(instance)
 
+    def _parse_similar_limit(self, request):
+        raw_limit = request.query_params.get('limit', RecommendationService.DEFAULT_LIMIT)
+
+        try:
+            limit = int(raw_limit)
+        except (TypeError, ValueError):
+            return None, Response(
+                {'detail': 'O parâmetro limit deve ser um número inteiro positivo.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if limit < 1:
+            return None, Response(
+                {'detail': 'O parâmetro limit deve ser maior ou igual a 1.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return min(limit, 50), None
+
     @action(
         detail=True,
         methods=['get'],
@@ -48,7 +67,10 @@ class GameViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
 
-        limit = min(int(request.query_params.get('limit', 10)), 50)
+        limit, error_response = self._parse_similar_limit(request)
+        if error_response is not None:
+            return error_response
+
         similar_games = self._recommendation_service.find_similar_to_game(game, limit=limit)
         serializer = self.get_serializer(similar_games, many=True)
         return Response(serializer.data)
