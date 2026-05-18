@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GameRAG - Sistema de Recomendação de Jogos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        };
+    </script>
+    <style>
+        /* Transição suave para tema */
+        html {
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-white text-gray-900 dark:bg-gray-950 dark:text-white transition-colors">
+    <!-- Container principal -->
+    <div class="min-h-screen flex flex-col items-center justify-center px-4 py-12">
+        <!-- Toggle de tema -->
+        <div class="absolute top-6 right-6">
+            <button id="theme-toggle" class="p-2 rounded-lg bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors" aria-label="Alternar tema">
+                <svg id="sun-icon" class="w-6 h-6 text-yellow-500 hidden" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zM12 18a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM4.22 4.22a1 1 0 011.42 0l.7.7a1 1 0 01-1.42 1.42l-.7-.7a1 1 0 010-1.42zM17.66 17.66a1 1 0 011.42 0l.7.7a1 1 0 01-1.42 1.42l-.7-.7a1 1 0 010-1.42zM2 12a1 1 0 011-1h1a1 1 0 110 2H3a1 1 0 01-1-1zM19 12a1 1 0 011-1h1a1 1 0 110 2h-1a1 1 0 01-1-1zM5.64 17.66a1 1 0 010-1.42l.7-.7a1 1 0 011.42 1.42l-.7.7a1 1 0 01-1.42 0zM16.24 6.34a1 1 0 010-1.42l.7-.7a1 1 0 111.42 1.42l-.7.7a1 1 0 01-1.42 0zM12 7a5 5 0 100 10A5 5 0 0012 7z"/>
+                </svg>
+                <svg id="moon-icon" class="w-6 h-6 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Card principal -->
+        <div class="w-full max-w-md">
+            <!-- Logo/Título -->
+            <div class="text-center mb-12">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full mb-4">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                </div>
+                <h1 class="text-4xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 dark:from-purple-400 dark:to-indigo-400 bg-clip-text text-transparent mb-2">
+                    GameRAG
+                </h1>
+                <p class="text-gray-600 dark:text-gray-400">Descobra seus próximos jogos favoritos</p>
+            </div>
+
+            <!-- Formulário -->
+            <form class="space-y-6" id="auth-form">
+                <!-- Abas -->
+                <div class="flex gap-2 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+                    <button type="button" class="tab-btn flex-1 py-2 px-4 rounded-md font-medium transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm" data-tab="login">
+                        Entrar
+                    </button>
+                    <button type="button" class="tab-btn flex-1 py-2 px-4 rounded-md font-medium transition-all text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200" data-tab="signup">
+                        Cadastrar
+                    </button>
+                </div>
+
+                <!-- Conteúdo Login -->
+                <div id="login-content" class="tab-content space-y-4">
+                    <div>
+                        <label for="login-email" class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                            Email
+                        </label>
+                        <input 
+                            type="email" 
+                            id="login-email" 
+                            name="email" 
+                            placeholder="seu@email.com"
+                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 transition-all"
+                            required
+                        >
+                    </div>
+
+                    <div>
+                        <label for="login-password" class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                            Senha
+                        </label>
+                        <input 
+                            type="password" 
+                            id="login-password" 
+                            name="password" 
+                            placeholder="••••••••"
+                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 transition-all"
+                            required
+                        >
+                    </div>
+
+                    
+                </div>
+
+                <!-- Conteúdo Cadastro -->
+                <div id="signup-content" class="tab-content hidden space-y-4">
+                    <div>
+                        <label for="signup-name" class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                            Nome Completo
+                        </label>
+                        <input 
+                            type="text" 
+                            id="signup-name" 
+                            name="name" 
+                            placeholder="Seu nome"
+                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 transition-all"
+                        >
+                    </div>
+
+                    <div>
+                        <label for="signup-email" class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                            Email
+                        </label>
+                        <input 
+                            type="email" 
+                            id="signup-email" 
+                            name="email" 
+                            placeholder="seu@email.com"
+                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 transition-all"
+                        >
+                    </div>
+
+                    <div>
+                        <label for="signup-password" class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                            Senha
+                        </label>
+                        <input 
+                            type="password" 
+                            id="signup-password" 
+                            name="password" 
+                            placeholder="••••••••"
+                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 transition-all"
+                        >
+                    </div>
+
+                    <div>
+                        <label for="signup-confirm" class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                            Confirmar Senha
+                        </label>
+                        <input 
+                            type="password" 
+                            id="signup-confirm" 
+                            name="confirm" 
+                            placeholder="••••••••"
+                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 transition-all"
+                        >
+                    </div>
+
+                </div>
+
+                <!-- Botão Principal -->
+                <button 
+                    type="submit" 
+                    id="submit-btn"
+                    class="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold rounded-lg transition-all transform hover:scale-105 active:scale-95 shadow-lg"
+                >
+                    Entrar
+                </button>
+            </form>
+
+        </div>
+    </div>
+    <script src="./scripts/alterarTema.js"></script>
+    <script src="./scripts/telaInicial.js"></script>
+</body>
+</html>
