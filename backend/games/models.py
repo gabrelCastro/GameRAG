@@ -44,3 +44,49 @@ class GameReview(models.Model):
 
     def __str__(self):
         return f'{self.user} → {self.game} ({self.rating}/10)'
+
+
+class GameFavorite(models.Model):
+    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name='favorites')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='game_favorites')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        unique_together = ('game', 'user')
+
+    def __str__(self):
+        return f'{self.user} favoritou {self.game}'
+
+
+class GameLibraryEntry(models.Model):
+    STATUS_WANT_TO_PLAY = 'want_to_play'
+    STATUS_PLAYING = 'playing'
+    STATUS_COMPLETED = 'completed'
+    STATUS_DROPPED = 'dropped'
+
+    STATUS_CHOICES = [
+        (STATUS_WANT_TO_PLAY, 'Quero jogar'),
+        (STATUS_PLAYING, 'Jogando'),
+        (STATUS_COMPLETED, 'Concluído'),
+        (STATUS_DROPPED, 'Abandonado'),
+    ]
+
+    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name='library_entries')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='game_library')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_WANT_TO_PLAY)
+    hours_played = models.DecimalField(
+        max_digits=7,
+        decimal_places=1,
+        default=0,
+        validators=[MinValueValidator(0)],
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-updated_at']
+        unique_together = ('game', 'user')
+
+    def __str__(self):
+        return f'{self.user} - {self.game} ({self.status})'

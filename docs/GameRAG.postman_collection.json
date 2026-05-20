@@ -15,6 +15,10 @@
     {
       "key": "refresh_token",
       "value": ""
+    },
+    {
+      "key": "game_id",
+      "value": "1"
     }
   ],
   "item": [
@@ -161,7 +165,7 @@
           "name": "Detalhar jogo",
           "request": {
             "method": "GET",
-            "url": "{{base_url}}/api/games/1/",
+            "url": "{{base_url}}/api/games/{{game_id}}/",
             "auth": {
               "type": "bearer",
               "bearer": [{ "key": "token", "value": "{{access_token}}" }]
@@ -170,6 +174,19 @@
         },
         {
           "name": "Cadastrar jogo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.id) {",
+                  "  pm.collectionVariables.set('game_id', res.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "url": "{{base_url}}/api/games/",
@@ -190,7 +207,7 @@
           "name": "Atualizar jogo (PUT)",
           "request": {
             "method": "PUT",
-            "url": "{{base_url}}/api/games/1/",
+            "url": "{{base_url}}/api/games/{{game_id}}/",
             "auth": {
               "type": "bearer",
               "bearer": [{ "key": "token", "value": "{{access_token}}" }]
@@ -208,7 +225,7 @@
           "name": "Atualizar jogo (PATCH)",
           "request": {
             "method": "PATCH",
-            "url": "{{base_url}}/api/games/1/",
+            "url": "{{base_url}}/api/games/{{game_id}}/",
             "auth": {
               "type": "bearer",
               "bearer": [{ "key": "token", "value": "{{access_token}}" }]
@@ -226,7 +243,7 @@
           "name": "Remover jogo",
           "request": {
             "method": "DELETE",
-            "url": "{{base_url}}/api/games/1/",
+            "url": "{{base_url}}/api/games/{{game_id}}/",
             "auth": {
               "type": "bearer",
               "bearer": [{ "key": "token", "value": "{{access_token}}" }]
@@ -238,11 +255,142 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{base_url}}/api/games/1/similar/?limit=5",
+              "raw": "{{base_url}}/api/games/{{game_id}}/similar/?limit=5",
               "host": ["{{base_url}}"],
-              "path": ["api", "games", "1", "similar", ""],
+              "path": ["api", "games", "{{game_id}}", "similar", ""],
               "query": [{ "key": "limit", "value": "5" }]
             },
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{access_token}}" }]
+            }
+          }
+        },
+        {
+          "name": "Listar avaliações do jogo",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/games/{{game_id}}/reviews/",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{access_token}}" }]
+            }
+          }
+        },
+        {
+          "name": "Criar ou atualizar minha avaliação",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/games/{{game_id}}/reviews/",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{access_token}}" }]
+            },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 9,\n  \"comment\": \"Excelente RPG, com boa progressão e mundo aberto.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Remover minha avaliação",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/games/{{game_id}}/reviews/me/",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{access_token}}" }]
+            }
+          }
+        },
+        {
+          "name": "Favoritar jogo",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/games/{{game_id}}/favorite/",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{access_token}}" }]
+            }
+          }
+        },
+        {
+          "name": "Remover favorito",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/games/{{game_id}}/favorite/",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{access_token}}" }]
+            }
+          }
+        },
+        {
+          "name": "Listar meus favoritos",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/games/favorites/",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{access_token}}" }]
+            }
+          }
+        },
+        {
+          "name": "Adicionar jogo à minha biblioteca",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/games/{{game_id}}/library/",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{access_token}}" }]
+            },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"playing\",\n  \"hours_played\": \"12.5\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Atualizar jogo na minha biblioteca",
+          "request": {
+            "method": "PATCH",
+            "url": "{{base_url}}/api/games/{{game_id}}/library/",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{access_token}}" }]
+            },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"completed\",\n  \"hours_played\": \"45.0\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Remover jogo da minha biblioteca",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/games/{{game_id}}/library/",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{access_token}}" }]
+            }
+          }
+        },
+        {
+          "name": "Listar minha biblioteca",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/games/library/",
             "auth": {
               "type": "bearer",
               "bearer": [{ "key": "token", "value": "{{access_token}}" }]

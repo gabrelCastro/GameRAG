@@ -199,11 +199,9 @@ SIMPLE_JWT = {
 }
 
 # OpenAI
-EMBEDDINGS_ENABLED = env_bool('EMBEDDINGS_ENABLED', True)
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '').strip()
 
-if EMBEDDINGS_ENABLED and OPENAI_API_KEY in {'', 'your-api-key-here'}:
+if OPENAI_API_KEY in {'', 'your-api-key-here'}:
     raise ImproperlyConfigured(
-        'OPENAI_API_KEY não configurada. Defina uma chave válida no backend/.env '
-        'ou use EMBEDDINGS_ENABLED=false para iniciar a aplicação sem embeddings.'
+        'OPENAI_API_KEY não configurada. Defina uma chave válida no backend/.env.'
     )

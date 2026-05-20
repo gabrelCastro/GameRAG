@@ -2,8 +2,33 @@ from types import SimpleNamespace
 from unittest.mock import Mock
 
 from django.test import SimpleTestCase
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 
 from games.interfaces.views import GameViewSet
+
+
+class GameViewSetPermissionTests(SimpleTestCase):
+    def setUp(self):
+        self.viewset = GameViewSet.__new__(GameViewSet)
+
+    def _permission_classes_for_action(self, action):
+        self.viewset.action = action
+        return [permission.__class__ for permission in self.viewset.get_permissions()]
+
+    def test_read_actions_require_authenticated_user(self):
+        for action in ['list', 'retrieve']:
+            with self.subTest(action=action):
+                self.assertEqual(self._permission_classes_for_action(action), [IsAuthenticated])
+
+    def test_catalog_write_actions_require_admin_user(self):
+        for action in ['create', 'update', 'partial_update', 'destroy']:
+            with self.subTest(action=action):
+                self.assertEqual(self._permission_classes_for_action(action), [IsAdminUser])
+
+    def test_custom_interaction_actions_require_authenticated_user(self):
+        for action in ['similar', 'reviews', 'delete_my_review', 'favorite', 'favorites', 'library', 'my_library']:
+            with self.subTest(action=action):
+                self.assertEqual(self._permission_classes_for_action(action), [IsAuthenticated])
 
 
 class SimilarLimitParsingTests(SimpleTestCase):

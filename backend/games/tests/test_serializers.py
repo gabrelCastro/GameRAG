@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase
 
-from games.interfaces.serializers import GameSerializer
+from games.interfaces.serializers import GameLibraryEntrySerializer, GameReviewSerializer, GameSerializer
 
 
 class GameSerializerTests(SimpleTestCase):
@@ -78,3 +78,56 @@ class GameSerializerTests(SimpleTestCase):
         self.assertNotIn('id', serializer.validated_data)
         self.assertNotIn('created_at', serializer.validated_data)
         self.assertNotIn('updated_at', serializer.validated_data)
+
+
+class GameReviewSerializerTests(SimpleTestCase):
+    def test_valid_review_payload_is_accepted(self):
+        serializer = GameReviewSerializer(data={'rating': 8, 'comment': 'Muito bom.'})
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
+    def test_rejects_rating_below_one(self):
+        serializer = GameReviewSerializer(data={'rating': 0, 'comment': ''})
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('rating', serializer.errors)
+
+    def test_rejects_rating_greater_than_ten(self):
+        serializer = GameReviewSerializer(data={'rating': 11, 'comment': ''})
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('rating', serializer.errors)
+
+    def test_ignores_read_only_relationship_fields(self):
+        serializer = GameReviewSerializer(
+            data={'id': 99, 'game': 1, 'user': 1, 'username': 'ana', 'rating': 7, 'comment': ''}
+        )
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        self.assertNotIn('id', serializer.validated_data)
+        self.assertNotIn('game', serializer.validated_data)
+        self.assertNotIn('user', serializer.validated_data)
+
+
+class GameLibraryEntrySerializerTests(SimpleTestCase):
+    def test_valid_library_payload_is_accepted(self):
+        serializer = GameLibraryEntrySerializer(data={'status': 'playing', 'hours_played': '12.5'})
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
+    def test_accepts_empty_payload_for_default_model_values(self):
+        serializer = GameLibraryEntrySerializer(data={})
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
+    def test_rejects_invalid_status(self):
+        serializer = GameLibraryEntrySerializer(data={'status': 'paused', 'hours_played': '1.0'})
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('status', serializer.errors)
+
+    def test_rejects_negative_hours_played(self):
+        serializer = GameLibraryEntrySerializer(data={'status': 'playing', 'hours_played': '-0.1'})
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('hours_played', serializer.errors)

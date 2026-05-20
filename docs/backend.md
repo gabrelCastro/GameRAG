@@ -24,17 +24,10 @@ API REST construída com Django + Django REST Framework, seguindo arquitetura DD
 
 ### Pré-requisitos
 
-- Python 3.12+
 - Docker
 - Chave de API da OpenAI
 
-### 1. Subir o banco
-
-```bash
-docker compose up -d
-```
-
-### 2. Configurar variáveis de ambiente
+### 1. Configurar variáveis de ambiente
 
 Copie o arquivo de exemplo e preencha sua chave da OpenAI:
 
@@ -44,37 +37,24 @@ cp backend/.env.example backend/.env
 
 `.env`:
 ```
+SECRET_KEY=uma-chave-segura-para-desenvolvimento
+DEBUG=true
 OPENAI_API_KEY=sk-...
 ```
 
-### 3. Ativar o ambiente virtual
+### 2. Subir a aplicação
 
 ```bash
-cd backend
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+docker compose up --build
 ```
 
-### 4. Aplicar as migrations
+O Compose sobe o PostgreSQL com pgvector, instala as dependências do backend, aplica as migrations no entrypoint e inicia o servidor Django em `http://localhost:8000`.
+
+### 3. Criar superusuário (opcional)
 
 ```bash
-python manage.py migrate
+docker compose exec backend python manage.py createsuperuser
 ```
-
-### 5. Criar superusuário (opcional)
-
-```bash
-python manage.py createsuperuser
-```
-
-### 6. Subir o servidor
-
-```bash
-python manage.py runserver
-```
-
-A API estará disponível em `http://localhost:8000`.
 
 ---
 
@@ -89,8 +69,9 @@ O projeto segue DDD pragmático: os models do Django servem como entidades, sem 
 ├── domain/
 │   └── services.py        # Lógica de domínio pura
 ├── application/
-│   ├── game_service.py        # Orquestra operações de jogos
-│   └── recommendation_service.py  # Lógica de recomendação
+│   ├── game_service.py             # Orquestra operações de jogos
+│   ├── recommendation_service.py   # Lógica de recomendação
+│   └── user_game_service.py        # Interações do usuário com jogos
 ├── infrastructure/
 │   └── repositories.py    # Encapsulamento do ORM (futuro)
 └── interfaces/
@@ -113,7 +94,7 @@ HTTP Request
 
 | Contexto | Prefixo de rota | Responsabilidade |
 |---|---|---|
-| `games` | `/api/games/` | Catálogo de jogos e recomendações |
+| `games` | `/api/games/` | Catálogo, recomendações, avaliações, favoritos e biblioteca do usuário |
 | `users` | `/api/auth/` | Registro, login e autenticação |
 
 ---
@@ -121,7 +102,7 @@ HTTP Request
 ## Banco de dados
 
 - **Engine:** PostgreSQL 17 via Docker
-- **Extensão:** `pgvector` — ativada automaticamente na migration `0002_game_embedding`
+- **Extensão:** `pgvector` — ativada automaticamente na migration inicial do app `games`
 - **Conexão padrão (dev):**
 
 ```
@@ -131,6 +112,17 @@ banco:    gamerag
 usuário:  gamerag
 senha:    gamerag
 ```
+
+### Tabelas da aplicação
+
+O app `games` possui uma única migration inicial (`backend/games/migrations/0001_initial.py`) e cria quatro tabelas próprias:
+
+| Tabela | Model | Uso |
+|---|---|---|
+| `games_game` | `Game` | Catálogo de jogos e base dos embeddings |
+| `games_gamereview` | `GameReview` | Avaliações e comentários dos usuários |
+| `games_gamefavorite` | `GameFavorite` | Jogos favoritados pelo usuário |
+| `games_gamelibraryentry` | `GameLibraryEntry` | Status do jogo na biblioteca do usuário |
 
 ---
 
@@ -142,7 +134,7 @@ Arquivo: `backend/games/models.py`
 
 | Campo | Tipo | Descrição |
 |---|---|---|
-| `id` | `AutoField` | Chave primária |
+| `id` | `BigAutoField` | Chave primária |
 | `title` | `CharField(255)` | Título do jogo |
 | `description` | `TextField` | Descrição |
 | `genre` | `CharField(100)` | Gênero |
@@ -156,6 +148,59 @@ Arquivo: `backend/games/models.py`
 | `embedding` | `VectorField(1536)` | Embedding OpenAI text-embedding-3-small |
 | `created_at` | `DateTimeField` | Criação (auto) |
 | `updated_at` | `DateTimeField` | Atualização (auto) |
+
+### Model — `GameReview`
+
+Representa a avaliação de um usuário para um jogo.
+
+| Campo | Tipo | Descrição |
+|---|---|---|
+| `id` | `BigAutoField` | Chave primária |
+| `game` | `ForeignKey(Game)` | Jogo avaliado |
+| `user` | `ForeignKey(User)` | Usuário que avaliou |
+| `rating` | `PositiveSmallIntegerField` | Nota de 1 a 10 |
+| `comment` | `TextField` | Comentário opcional |
+| `created_at` | `DateTimeField` | Criação (auto) |
+
+Restrição: um usuário só pode ter uma avaliação por jogo (`unique_together = game, user`).
+
+### Model — `GameFavorite`
+
+Representa um jogo favoritado pelo usuário.
+
+| Campo | Tipo | Descrição |
+|---|---|---|
+| `id` | `BigAutoField` | Chave primária |
+| `game` | `ForeignKey(Game)` | Jogo favoritado |
+| `user` | `ForeignKey(User)` | Usuário dono do favorito |
+| `created_at` | `DateTimeField` | Criação (auto) |
+
+Restrição: um usuário só pode favoritar o mesmo jogo uma vez (`unique_together = game, user`).
+
+### Model — `GameLibraryEntry`
+
+Representa o estado de um jogo na biblioteca pessoal do usuário.
+
+| Campo | Tipo | Descrição |
+|---|---|---|
+| `id` | `BigAutoField` | Chave primária |
+| `game` | `ForeignKey(Game)` | Jogo na biblioteca |
+| `user` | `ForeignKey(User)` | Usuário dono da entrada |
+| `status` | `CharField(20)` | Estado do jogo |
+| `hours_played` | `DecimalField` | Horas jogadas (>= 0) |
+| `created_at` | `DateTimeField` | Criação (auto) |
+| `updated_at` | `DateTimeField` | Atualização (auto) |
+
+Status aceitos:
+
+| Valor | Significado |
+|---|---|
+| `want_to_play` | Quero jogar |
+| `playing` | Jogando |
+| `completed` | Concluído |
+| `dropped` | Abandonado |
+
+Restrição: um usuário só pode ter uma entrada de biblioteca por jogo (`unique_together = game, user`).
 
 ### Services
 
@@ -176,6 +221,22 @@ Arquivo: `backend/games/models.py`
 | `find_similar_games(embedding, limit)` | Busca jogos por distância de cosseno no espaço vetorial |
 | `find_similar_to_game(game, limit)` | Busca similares a um jogo existente, excluindo ele mesmo |
 
+**`UserGameService`** — `backend/games/application/user_game_service.py`
+
+| Método | Descrição |
+|---|---|
+| `list_reviews(game)` | Lista avaliações de um jogo |
+| `get_user_review(game, user)` | Busca a avaliação do usuário para um jogo |
+| `save_review(serializer, game, user)` | Cria ou atualiza avaliação |
+| `delete_review(game, user)` | Remove avaliação do usuário |
+| `list_favorites(user)` | Lista favoritos do usuário |
+| `add_favorite(game, user)` | Favorita um jogo |
+| `remove_favorite(game, user)` | Remove favorito |
+| `list_library(user)` | Lista biblioteca do usuário |
+| `get_library_entry(game, user)` | Busca entrada de biblioteca do usuário |
+| `save_library_entry(serializer, game, user)` | Cria ou atualiza entrada da biblioteca |
+| `remove_library_entry(game, user)` | Remove entrada da biblioteca |
+
 ### Endpoints REST
 
 Base URL: `http://localhost:8000/api/games/`
@@ -189,6 +250,16 @@ Base URL: `http://localhost:8000/api/games/`
 | `PATCH` | `/api/games/{id}/` | Atualizar parcial | 200 / 404 |
 | `DELETE` | `/api/games/{id}/` | Remover jogo | 204 / 404 |
 | `GET` | `/api/games/{id}/similar/` | Jogos similares | 200 / 404 / 422 |
+| `GET` | `/api/games/{id}/reviews/` | Listar avaliações do jogo | 200 / 404 |
+| `POST` | `/api/games/{id}/reviews/` | Criar ou atualizar minha avaliação | 200 / 201 / 400 / 404 |
+| `DELETE` | `/api/games/{id}/reviews/me/` | Remover minha avaliação | 204 / 404 |
+| `POST` | `/api/games/{id}/favorite/` | Favoritar jogo | 200 / 201 / 404 |
+| `DELETE` | `/api/games/{id}/favorite/` | Remover favorito | 204 / 404 |
+| `GET` | `/api/games/favorites/` | Listar meus favoritos | 200 |
+| `POST` | `/api/games/{id}/library/` | Adicionar jogo à minha biblioteca | 200 / 201 / 400 / 404 |
+| `PATCH` | `/api/games/{id}/library/` | Atualizar status/horas na biblioteca | 200 / 201 / 400 / 404 |
+| `DELETE` | `/api/games/{id}/library/` | Remover jogo da minha biblioteca | 204 / 404 |
+| `GET` | `/api/games/library/` | Listar minha biblioteca | 200 |
 
 #### Query params disponíveis
 
@@ -218,6 +289,32 @@ Base URL: `http://localhost:8000/api/games/`
 
 > O campo `embedding` é gerenciado internamente — não deve ser enviado pelo cliente.
 
+#### Payload de avaliação
+
+`POST /api/games/{id}/reviews/`
+
+```json
+{
+  "rating": 9,
+  "comment": "Excelente RPG, com boa progressão e mundo aberto."
+}
+```
+
+Se o usuário já tiver avaliado o jogo, a requisição atualiza a avaliação existente.
+
+#### Payload de biblioteca
+
+`POST /api/games/{id}/library/` ou `PATCH /api/games/{id}/library/`
+
+```json
+{
+  "status": "playing",
+  "hours_played": "12.5"
+}
+```
+
+O campo `status` aceita `want_to_play`, `playing`, `completed` ou `dropped`.
+
 ### Validações do serializer
 
 | Campo | Regra |
@@ -225,6 +322,9 @@ Base URL: `http://localhost:8000/api/games/`
 | `rating` | Entre 0 e 10 |
 | `price` | Maior ou igual a 0 |
 | `tags` | Lista de strings |
+| `GameReview.rating` | Entre 1 e 10 |
+| `GameLibraryEntry.status` | Um dos status aceitos |
+| `GameLibraryEntry.hours_played` | Maior ou igual a 0 |
 
 ---
 
@@ -241,7 +341,7 @@ Authorization: Bearer <access_token>
 | Perfil | `is_staff` | Permissões |
 |---|---|---|
 | **Admin** | `True` | Acesso total — CRUD de jogos e todos os endpoints |
-| **Usuário** | `False` | Registro, login e endpoints públicos (ex: perguntas ao RAG) |
+| **Usuário** | `False` | Registro, login, recomendações e interações pessoais com jogos |
 
 ### Endpoints de autenticação
 
@@ -294,11 +394,19 @@ Base URL: `http://localhost:8000/api/auth/`
 |---|---|---|---|
 | `POST /api/auth/register/` | ✅ | ✅ | ✅ |
 | `POST /api/auth/login/` | ✅ | ✅ | ✅ |
-| `GET /api/games/` | 401 | 403 | ✅ |
+| `GET /api/games/` | 401 | ✅ | ✅ |
+| `GET /api/games/{id}/` | 401 | ✅ | ✅ |
 | `POST /api/games/` | 401 | 403 | ✅ |
 | `PUT/PATCH /api/games/{id}/` | 401 | 403 | ✅ |
 | `DELETE /api/games/{id}/` | 401 | 403 | ✅ |
 | `GET /api/games/{id}/similar/` | 401 | ✅ | ✅ |
+| `GET /api/games/{id}/reviews/` | 401 | ✅ | ✅ |
+| `POST /api/games/{id}/reviews/` | 401 | ✅ | ✅ |
+| `DELETE /api/games/{id}/reviews/me/` | 401 | ✅ | ✅ |
+| `POST/DELETE /api/games/{id}/favorite/` | 401 | ✅ | ✅ |
+| `GET /api/games/favorites/` | 401 | ✅ | ✅ |
+| `POST/PATCH/DELETE /api/games/{id}/library/` | 401 | ✅ | ✅ |
+| `GET /api/games/library/` | 401 | ✅ | ✅ |
 
 ---
 
@@ -364,7 +472,7 @@ Interface administrativa com o tema **Jazzmin** (`django-jazzmin`).
 | `list_filter` | genre, platform |
 | `search_fields` | title, developer, publisher |
 | `ordering` | title |
-| `inlines` | `GameReviewInline` — exibe as avaliações do jogo no mesmo formulário |
+| `inlines` | `GameReviewInline`, `GameFavoriteInline`, `GameLibraryEntryInline` |
 
 ### `GameReview`
 
@@ -372,6 +480,21 @@ Interface administrativa com o tema **Jazzmin** (`django-jazzmin`).
 |---|---|
 | `list_display` | game, user, rating, created_at |
 | `list_filter` | rating |
+| `search_fields` | game__title, user__username |
+
+### `GameFavorite`
+
+| Configuração | Valor |
+|---|---|
+| `list_display` | game, user, created_at |
+| `search_fields` | game__title, user__username |
+
+### `GameLibraryEntry`
+
+| Configuração | Valor |
+|---|---|
+| `list_display` | game, user, status, hours_played, updated_at |
+| `list_filter` | status |
 | `search_fields` | game__title, user__username |
 
 ### `User`
