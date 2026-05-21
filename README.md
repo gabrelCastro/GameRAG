@@ -9,7 +9,20 @@ O projeto já expõe o Django Admin em `/admin/`, protegido por login e senha.
 Para criar um usuário admin local de forma repetível, preencha `ADMIN_USERNAME` e `ADMIN_PASSWORD` em `backend/.env` e suba o backend, ou execute:
 
 ```bash
+# Ir no diretório de backend.
 cd backend
+
+# Instalar as depêndencias necessárias.
+pip install -r requirements.txt
+
+# Iniciar ambiente virtual
+# Linux
+source .venv/bin/activate
+
+# Windows
+source .venv/Scripts/activate
+
+# Criar um novo administrador
 python manage.py create_admin_user
 ```
 
