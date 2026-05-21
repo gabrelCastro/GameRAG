@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GameRAG - Pesquisa de Jogos</title>
+  <link rel="stylesheet" href="./styles/telaRAG.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Pesquisa de Jogos</h1>
+      <p>Encontre jogos por nome, gênero, plataforma ou descrição. Use a busca para explorar a biblioteca de jogos do GameRAG.</p>
+    </header>
+
+    <section class="search-box">
+      <input type="text" id="searchInput" placeholder="Digite o nome do jogo, gênero ou plataforma" />
+      <button id="searchButton">Pesquisar</button>
+    </section>
+
+    <section class="results" id="results">
+      <div class="empty-state">Nenhum jogo carregado. Faça uma pesquisa para ver resultados.</div>
+    </section>
+  </div>
+  <script src="./scripts/telaInicial.js"></script>
+</body>
+</html>
