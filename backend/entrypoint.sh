@@ -18,4 +18,10 @@ done
 echo "Banco de dados pronto."
 
 python manage.py migrate --noinput
+
+if [ -n "${ADMIN_USERNAME:-}" ] && [ -n "${ADMIN_PASSWORD:-}" ]; then
+  echo "Garantindo usuário admin local..."
+  python manage.py create_admin_user
+fi
+
 exec python manage.py runserver 0.0.0.0:8000

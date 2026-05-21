@@ -56,6 +56,8 @@ O Compose sobe o PostgreSQL com pgvector, instala as dependências do backend, a
 docker compose exec backend python manage.py createsuperuser
 ```
 
+Se você quiser deixar isso repetível para o ambiente local, também pode definir `ADMIN_USERNAME` e `ADMIN_PASSWORD` em `backend/.env`. Quando esses valores estiverem presentes, o `entrypoint.sh` cria ou promove automaticamente o usuário admin ao subir o container.
+
 ---
 
 ## Arquitetura — DDD Pragmático
