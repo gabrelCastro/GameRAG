@@ -39,8 +39,8 @@ Para criar um usuário admin local de forma repetível, preencha `ADMIN_USERNAME
 # Ir no diretório de backend.
 cd backend
 
-# Instalar as depêndencias necessárias.
-pip install -r requirements.txt
+# Criar um ambiente virtual .venv
+python3 -m venv .venv
 
 # Iniciar ambiente virtual
 # Linux
@@ -48,6 +48,9 @@ source .venv/bin/activate
 
 # Windows
 source .venv/Scripts/activate
+
+# Instalar as depêndencias necessárias.
+pip install -r requirements.txt
 
 # Criar um novo administrador
 python manage.py create_admin_user
