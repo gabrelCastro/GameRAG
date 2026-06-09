@@ -6,6 +6,7 @@ import api from '@/services/api'
 export const useAuthStore = defineStore('auth', () => {
   const access = ref(localStorage.getItem('access') ?? '')
   const refresh = ref(localStorage.getItem('refresh') ?? '')
+  const username = ref(localStorage.getItem('username') ?? '')
 
   const isAuthenticated = computed(() => Boolean(access.value))
 
@@ -16,22 +17,30 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.setItem('refresh', r)
   }
 
-  async function login({ username, password }) {
-    const { data } = await api.post('/auth/login/', { username, password })
-    setTokens(data)
+  function setUsername(u) {
+    username.value = u
+    localStorage.setItem('username', u)
   }
 
-  async function register({ username, email, password }) {
-    await api.post('/auth/register/', { username, email, password })
-    await login({ username, password })
+  async function login({ username: u, password }) {
+    const { data } = await api.post('/auth/login/', { username: u, password })
+    setTokens(data)
+    setUsername(u)
+  }
+
+  async function register({ username: u, email, password }) {
+    await api.post('/auth/register/', { username: u, email, password })
+    await login({ username: u, password })
   }
 
   function logout() {
     access.value = ''
     refresh.value = ''
+    username.value = ''
     localStorage.removeItem('access')
     localStorage.removeItem('refresh')
+    localStorage.removeItem('username')
   }
 
-  return { access, refresh, isAuthenticated, login, register, logout }
+  return { access, refresh, username, isAuthenticated, login, register, logout }
 })

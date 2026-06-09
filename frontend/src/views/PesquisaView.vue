@@ -40,6 +40,16 @@ function logout() {
   router.push({ name: 'login' })
 }
 
+function openProfile() {
+  // Navegação para perfil ainda não implementada
+  alert('Funcionalidade de perfil ainda não implementada.')
+}
+
+function openSettings() {
+  // Navegação para configurações ainda não implementada
+  alert('Funcionalidade de configurações ainda não implementada.')
+}
+
 function formatPrice(value) {
   const number = Number(value)
   if (Number.isNaN(number)) return value
@@ -49,94 +59,101 @@ function formatPrice(value) {
 
 <template>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
-    <Header username="Usuário" />
-    <div class="max-w-5xl mx-auto px-6 py-12">
-      <header class="text-center mb-8">
-        <h1 class="text-4xl font-bold mb-2">Pesquisa de Jogos</h1>
-        <p class="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-          Encontre jogos por nome, gênero, plataforma ou descrição. Use a busca para explorar a
-          biblioteca do GameRAG.
-        </p>
-      </header>
+    <Header
+      :username="auth.username || 'Usuário'"
+      @profile-click="openProfile"
+      @settings-click="openSettings"
+      @logout="logout"
+    />
+    <main id="search-page" aria-labelledby="search-heading" class="max-w-6xl mx-auto px-4 py-10 sm:px-6 lg:px-8">
+      <section class="mx-auto w-full max-w-4xl rounded-[2rem] border border-slate-200/40 bg-white/90 p-6 shadow-xl shadow-slate-950/10 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95 dark:shadow-slate-950/40">
+        <div class="text-center mb-8">
+          <p class="text-sm uppercase tracking-[0.3em] text-slate-500 dark:text-sky-400/80 mb-3">Pesquisa de Jogos</p>
+          <h1 id="search-heading" class="text-4xl sm:text-5xl font-semibold text-slate-950 dark:text-white mb-3">Encontre seu próximo jogo</h1>
+          <p class="text-slate-600 max-w-2xl mx-auto leading-7 dark:text-slate-300">
+            Encontre jogos por nome, gênero, plataforma ou descrição. Use a busca para explorar a
+            biblioteca do GameRAG.
+          </p>
+        </div>
 
-      <section class="flex flex-wrap gap-3 mb-8">
-        <input
-          v-model="query"
-          type="text"
-          placeholder="Digite o nome do jogo, gênero ou plataforma"
-          class="flex-1 min-w-[320px] px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          @keyup.enter="search"
-        />
-        <button
-          type="button"
-          class="px-5 py-3 rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-medium transition-colors disabled:opacity-60"
-          :disabled="status === 'loading'"
-          @click="search"
-        >
-          {{ status === 'loading' ? 'Buscando…' : 'Pesquisar' }}
-        </button>
-        <button
-          type="button"
-          class="px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
-          @click="logout"
-        >
-          Sair
-        </button>
+        <section class="mb-8">
+          <form class="grid gap-3 sm:grid-cols-[1.8fr_auto] sm:items-end" @submit.prevent="search" aria-label="Busca de jogos">
+            <label class="sr-only" for="search-input">Buscar jogos por nome, gênero ou plataforma</label>
+            <input
+              id="search-input"
+              v-model="query"
+              type="search"
+              placeholder="Digite o nome do jogo, gênero ou plataforma"
+              class="w-full px-5 py-4 rounded-2xl border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder-slate-500"
+              @keyup.enter="search"
+              aria-label="Buscar jogos por nome, gênero ou plataforma"
+            />
+            <button
+              type="submit"
+              class="w-full sm:w-auto px-6 py-4 rounded-2xl bg-sky-500 hover:bg-sky-400 text-white font-semibold transition-all shadow-lg shadow-sky-500/20 dark:shadow-sky-500/20 disabled:opacity-60"
+              :disabled="status === 'loading'"
+            >
+              {{ status === 'loading' ? 'Buscando…' : 'Pesquisar' }}
+            </button>
+          </form>
+        </section>
       </section>
 
-      <section>
+      <section aria-live="polite" aria-atomic="true" class="min-h-[5rem] mt-8">
         <div
           v-if="status === 'idle'"
-          class="text-center text-gray-500 dark:text-gray-400 py-10"
+          role="status"
+          class="text-center text-slate-400 py-10"
         >
           Nenhum jogo carregado. Faça uma pesquisa para ver resultados.
         </div>
         <div
           v-else-if="status === 'empty-query'"
-          class="text-center text-gray-500 dark:text-gray-400 py-10"
+          class="text-center text-slate-400 py-10"
         >
           Digite um termo de pesquisa para buscar jogos.
         </div>
         <div
           v-else-if="status === 'loading'"
-          class="text-center text-gray-500 dark:text-gray-400 py-10"
+          role="status"
+          class="text-center text-slate-400 py-10"
         >
           Buscando jogos para "{{ query }}"…
         </div>
         <div
           v-else-if="status === 'error'"
-          class="text-center text-red-500 dark:text-red-400 py-10"
+          class="text-center text-rose-400 py-10"
         >
           {{ errorMessage }}
         </div>
         <div
           v-else-if="status === 'no-results'"
-          class="text-center text-gray-500 dark:text-gray-400 py-10"
+          class="text-center text-slate-400 py-10"
         >
           Nenhum jogo encontrado para "{{ query }}".
         </div>
         <div
           v-else
-          class="grid gap-5 grid-cols-[repeat(auto-fill,minmax(240px,1fr))]"
+          class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3"
         >
           <article
             v-for="game in games"
             :key="game.id"
-            class="flex flex-col gap-2 p-5 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800"
+            class="flex flex-col gap-4 p-6 rounded-[1.75rem] bg-white border border-slate-200 shadow-lg shadow-slate-950/10 dark:bg-slate-950 dark:border-slate-800 dark:shadow-slate-950/40"
           >
-            <h2 class="text-lg font-semibold">{{ game.title }}</h2>
-            <p class="text-sm text-gray-600 dark:text-gray-300 line-clamp-4">
+            <h2 class="text-lg font-semibold text-slate-950 dark:text-white">{{ game.title }}</h2>
+            <p class="text-sm text-slate-600 dark:text-slate-400 line-clamp-4">
               {{ game.description }}
             </p>
             <div
-              class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-auto pt-2"
+              class="flex flex-col gap-3 mt-auto text-slate-500 text-xs sm:text-sm dark:text-slate-400"
             >
-              <span>{{ game.genre }} · {{ game.platform }}</span>
-              <span>{{ formatPrice(game.price) }}</span>
+              <span class="font-medium text-slate-700 dark:text-slate-300">{{ game.genre }} · {{ game.platform }}</span>
+              <span class="text-sky-500 font-semibold dark:text-sky-400">{{ formatPrice(game.price) }}</span>
             </div>
           </article>
         </div>
       </section>
-    </div>
+    </main>
   </div>
 </template>

@@ -61,8 +61,8 @@ const labelClass = 'block text-sm font-medium mb-2 text-gray-700 dark:text-gray-
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col items-center justify-center px-4 py-12 relative">
-    <div class="absolute top-6 right-6">
+  <main id="login-page" aria-labelledby="login-heading" class="min-h-screen flex flex-col items-center justify-center px-4 py-12 relative">
+    <div class="absolute top-4 right-4 z-20">
       <ThemeToggle />
     </div>
     <div class="w-full max-w-md">
@@ -85,6 +85,7 @@ const labelClass = 'block text-sm font-medium mb-2 text-gray-700 dark:text-gray-
           </svg>
         </div>
         <h1
+          id="login-heading"
           class="text-4xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 dark:from-purple-400 dark:to-indigo-400 bg-clip-text text-transparent mb-2"
         >
           GameRAG
@@ -93,26 +94,34 @@ const labelClass = 'block text-sm font-medium mb-2 text-gray-700 dark:text-gray-
       </div>
 
       <form class="space-y-6" @submit.prevent="onSubmit">
-        <div class="flex gap-2 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+        <div role="tablist" aria-label="Alternar entre Entrar e Cadastrar" class="flex gap-2 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
           <button
+            id="login-tab"
+            role="tab"
             type="button"
             class="flex-1 py-2 px-4 rounded-md font-medium transition-all"
             :class="tabClass('login')"
+            :aria-selected="currentTab === 'login'"
+            aria-controls="login-panel"
             @click="selectTab('login')"
           >
             Entrar
           </button>
           <button
+            id="signup-tab"
+            role="tab"
             type="button"
             class="flex-1 py-2 px-4 rounded-md font-medium transition-all"
             :class="tabClass('signup')"
+            :aria-selected="currentTab === 'signup'"
+            aria-controls="signup-panel"
             @click="selectTab('signup')"
           >
             Cadastrar
           </button>
         </div>
 
-        <div v-if="currentTab === 'login'" class="space-y-4">
+        <div v-if="currentTab === 'login'" id="login-panel" role="tabpanel" aria-labelledby="login-tab" class="space-y-4">
           <div>
             <label for="login-username" :class="labelClass">Usuário</label>
             <input
@@ -139,7 +148,7 @@ const labelClass = 'block text-sm font-medium mb-2 text-gray-700 dark:text-gray-
           </div>
         </div>
 
-        <div v-else class="space-y-4">
+        <div v-else id="signup-panel" role="tabpanel" aria-labelledby="signup-tab" class="space-y-4">
           <div>
             <label for="signup-username" :class="labelClass">Usuário</label>
             <input
@@ -198,10 +207,11 @@ const labelClass = 'block text-sm font-medium mb-2 text-gray-700 dark:text-gray-
           type="submit"
           :disabled="submitting"
           class="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold rounded-lg transition-all transform hover:scale-105 active:scale-95 shadow-lg disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+          aria-busy="submitting"
         >
           {{ submitting ? 'Aguarde…' : submitLabel }}
         </button>
       </form>
     </div>
-  </div>
+  </main>
 </template>

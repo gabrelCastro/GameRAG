@@ -1,28 +1,68 @@
 <template>
-  <header class="flex items-center justify-between px-5 py-4 bg-white text-slate-900 border-b border-gray-200 dark:bg-slate-950 dark:text-slate-100 dark:border-gray-800">
-    <div class="flex items-center">
-      <h1 class="text-xl font-bold">GameRAG</h1>
-    </div>
-
-    <div class="flex items-center gap-3">
+  <header
+    role="banner"
+    class="w-full flex flex-col gap-3 px-4 py-4 bg-white text-slate-900 border-b border-gray-200 dark:bg-slate-950 dark:text-slate-100 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between sm:px-5"
+  >
+  
+  <div class="flex items-center justify-between w-full gap-3 sm:w-auto">
+    <h1 class="text-xl font-semibold">GameRAG</h1>
+  </div>
+    <div class="flex flex-wrap items-center justify-end gap-3 w-full sm:w-auto">
       <ThemeToggle class="inline-flex" />
 
-      <button
-        class="inline-flex items-center gap-3 px-3 py-2 rounded-full bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100 transition hover:bg-slate-200 dark:hover:bg-slate-700"
-        type="button"
-        @click="onProfileClick"
-      >
-        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-indigo-600 text-white font-semibold">
-          {{ initials }}
-        </span>
-        <span class="text-sm font-medium">{{ displayName }}</span>
-      </button>
+      <div class="relative">
+        <button
+          class="inline-flex items-center gap-3 px-3 py-2 rounded-full bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100 transition hover:bg-slate-200 dark:hover:bg-slate-700"
+          type="button"
+          @click.stop="toggleMenu"
+          :aria-expanded="showMenu"
+          aria-haspopup="menu"
+          aria-label="Abrir menu de usuário"
+        >
+          <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-indigo-600 text-white font-semibold">
+            {{ initials }}
+          </span>
+          <span class="text-sm font-medium truncate max-w-[8rem]">{{ displayName }}</span>
+        </button>
+
+        <div
+          v-if="showMenu"
+          role="menu"
+          aria-label="Opções de usuário"
+          class="absolute right-0 mt-2 w-44 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950 z-10"
+        >
+          <button
+            type="button"
+            role="menuitem"
+            class="w-full px-4 py-3 text-left text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-100 dark:hover:bg-slate-800"
+            @click="selectMenu('profile')"
+          >
+            Perfil
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            class="w-full px-4 py-3 text-left text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-100 dark:hover:bg-slate-800"
+            @click="selectMenu('settings')"
+          >
+            Configurações
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            class="w-full px-4 py-3 text-left text-sm text-red-600 hover:bg-slate-100 dark:text-red-500 dark:hover:bg-slate-800"
+            @click="selectMenu('logout')"
+          >
+            Sair
+          </button>
+        </div>
+      </div>
     </div>
   </header>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import ThemeToggle from './ThemeToggle.vue'
 
 const props = defineProps({
@@ -32,7 +72,9 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['profile-click'])
+const emit = defineEmits(['profile-click', 'settings-click', 'logout'])
+
+const showMenu = ref(false)
 
 const displayName = computed(() => props.username || 'Usuário')
 
@@ -45,7 +87,14 @@ const initials = computed(() => {
     .join('')
 })
 
-const onProfileClick = () => {
-  emit('profile-click')
+function toggleMenu() {
+  showMenu.value = !showMenu.value
+}
+
+function selectMenu(action) {
+  showMenu.value = false
+  if (action === 'profile') emit('profile-click')
+  if (action === 'settings') emit('settings-click')
+  if (action === 'logout') emit('logout')
 }
 </script>
