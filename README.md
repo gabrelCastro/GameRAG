@@ -42,7 +42,9 @@ Preencha `OPENAI_API_KEY` em `backend/.env` e suba a aplicação:
 docker compose up --build
 ```
 
-A API ficará disponível em `http://localhost:8000`.
+A API ficará disponível em `http://localhost:8000`. 
+
+A página front-end é acessível em `http://localhost:5173`.
 
 ## Documentação
 
