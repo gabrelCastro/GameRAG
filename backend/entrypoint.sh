@@ -24,4 +24,9 @@ if [ -n "${ADMIN_USERNAME:-}" ] && [ -n "${ADMIN_PASSWORD:-}" ]; then
   python manage.py create_admin_user
 fi
 
+if [ "${SEED_DATA:-false}" = "true" ]; then
+  echo "Populando dados de exemplo..."
+  python manage.py seed_data
+fi
+
 exec python manage.py runserver 0.0.0.0:8000
