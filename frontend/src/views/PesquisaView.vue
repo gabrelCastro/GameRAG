@@ -41,13 +41,11 @@ function logout() {
 }
 
 function openProfile() {
-  // Navegação para perfil ainda não implementada
-  alert('Funcionalidade de perfil ainda não implementada.')
+  router.push({ name: 'perfil' })
 }
 
 function openSettings() {
-  // Navegação para configurações ainda não implementada
-  alert('Funcionalidade de configurações ainda não implementada.')
+  router.push({ name: 'configuracoes' })
 }
 
 function formatPrice(value) {

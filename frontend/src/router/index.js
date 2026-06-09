@@ -15,6 +15,18 @@ const routes = [
     component: () => import('@/views/PesquisaView.vue'),
     meta: { requiresAuth: true },
   },
+  {
+    path: '/perfil',
+    name: 'perfil',
+    component: () => import('@/views/PerfilView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/configuracoes',
+    name: 'configuracoes',
+    component: () => import('@/views/ConfiguracoesView.vue'),
+    meta: { requiresAuth: true },
+  },
 ]
 
 const router = createRouter({
