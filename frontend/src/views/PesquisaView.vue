@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
+import Header from '@/components/Header.vue'
 import api from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
 
@@ -48,6 +49,7 @@ function formatPrice(value) {
 
 <template>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
+    <Header username="Usuário" />
     <div class="max-w-5xl mx-auto px-6 py-12">
       <header class="text-center mb-8">
         <h1 class="text-4xl font-bold mb-2">Pesquisa de Jogos</h1>

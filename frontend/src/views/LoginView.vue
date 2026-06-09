@@ -2,6 +2,7 @@
 import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
+import ThemeToggle from '@/components/ThemeToggle.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
@@ -60,7 +61,10 @@ const labelClass = 'block text-sm font-medium mb-2 text-gray-700 dark:text-gray-
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col items-center justify-center px-4 py-12">
+  <div class="min-h-screen flex flex-col items-center justify-center px-4 py-12 relative">
+    <div class="absolute top-6 right-6">
+      <ThemeToggle />
+    </div>
     <div class="w-full max-w-md">
       <div class="text-center mb-12">
         <div
