@@ -1,5 +1,6 @@
 import logging
 
+from django.db.models import QuerySet
 from django.shortcuts import get_object_or_404
 
 from games.infrastructure.embedding_client import EmbeddingClient
@@ -12,7 +13,7 @@ class GameService:
     def __init__(self):
         self._embedding_client = EmbeddingClient()
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[Game]:
         return Game.objects.all()
 
     def get_by_id(self, game_id: int) -> Game:

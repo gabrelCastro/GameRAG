@@ -27,7 +27,7 @@ class ChatService:
         self._recommendation_service = RecommendationService()
         self._openai = OpenAI(api_key=settings.OPENAI_API_KEY)
 
-    def answer(self, question: str) -> dict:
+    def answer(self, question: str) -> dict[str, object]:
         embedding = self._embedding_client.generate(question)
         games = list(self._recommendation_service.find_similar_games(embedding, limit=_RAG_LIMIT))
         context = self._build_context(games)
