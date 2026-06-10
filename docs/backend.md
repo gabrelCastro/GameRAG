@@ -445,6 +445,18 @@ Configurada em `backend/.env`, carregada automaticamente via `python-dotenv` no 
 
 Se a geração de embedding falhar (chave inválida, timeout, etc.), o jogo **é salvo normalmente** sem embedding. O erro é registrado no log com o ID do jogo. O campo `embedding` permanece `null` e pode ser regerado futuramente.
 
+### Geração em lote (`generate_embeddings`)
+
+Jogos criados **fora da API** — via seed (`seed_games.py` / comando `seed_data`) ou inseridos direto no banco — **não passam pelo `game_service.py`** e portanto nascem sem embedding. Como o RAG do chat usa `.exclude(embedding=None)` em `recommendation_service.py`, jogos sem embedding ficam invisíveis para a busca e o chat responde que "não há jogos no catálogo".
+
+Para gerar os embeddings pendentes use o management command (idempotente — só processa jogos com `embedding=None`):
+
+```bash
+docker compose exec backend python manage.py generate_embeddings
+```
+
+> **Importante:** o `entrypoint.sh` executa esse comando automaticamente ao subir o container (após os seeds), então um banco recriado já sobe com os embeddings. Rode manualmente apenas se a `OPENAI_API_KEY` estiver ausente no primeiro boot ou ao inserir jogos sem usar a API.
+
 ---
 
 ## CORS

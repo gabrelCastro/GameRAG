@@ -71,4 +71,9 @@ else:
     call_command('seed_data')
 PY
 
+# Gera embeddings para jogos que ainda não os possuem (idempotente).
+# Necessário para o RAG do chat funcionar; sem embeddings a busca retorna vazio.
+echo "Gerando embeddings pendentes..."
+python manage.py generate_embeddings || echo "⚠️  Falha ao gerar embeddings (verifique OPENAI_API_KEY)."
+
 exec python manage.py runserver 0.0.0.0:8000
