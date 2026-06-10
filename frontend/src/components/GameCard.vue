@@ -72,7 +72,7 @@ async function checkFavorited() {
     const { data } = await api.get('/games/favorites/')
     isFavorited.value = data.some((fav) => fav.game.id === props.game.id)
   } catch (err) {
-    console.error('Erro ao verificar favoritos:', err)
+    // Falha ao verificar favoritos — mantém estado anterior
   }
 }
 
@@ -113,7 +113,7 @@ async function toggleFavorite() {
     }
     isFavorited.value = !isFavorited.value
   } catch (err) {
-    console.error('Erro ao atualizar favorito:', err)
+    // Falha ao atualizar favorito — mantém estado anterior
   } finally {
     favoriteLoading.value = false
   }
