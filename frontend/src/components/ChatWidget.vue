@@ -1,11 +1,13 @@
 <script setup>
-import { ref, nextTick, onBeforeUnmount } from 'vue'
+import { ref, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import api from '@/services/api'
 
 const isOpen = ref(false)
 const input = ref('')
 const loading = ref(false)
 const messagesEl = ref(null)
+
+const MAX_INPUT = 400
 
 const width = ref(420)
 const height = ref(560)
@@ -32,10 +34,7 @@ function startResize(e) {
 
 function onResize(e) {
   if (!resizing) return
-  // Widget fica ancorado no canto inferior-direito:
-  // arrastar para a esquerda  → aumenta largura
-  // arrastar para cima        → aumenta altura
-  width.value  = Math.max(MIN_W, Math.min(MAX_W,              startW + (startX - e.clientX)))
+  width.value  = Math.max(MIN_W, Math.min(MAX_W, startW + (startX - e.clientX)))
   height.value = Math.max(MIN_H, Math.min(window.innerHeight * 0.88, startH + (startY - e.clientY)))
 }
 
@@ -45,35 +44,50 @@ function stopResize() {
   window.removeEventListener('mouseup', stopResize)
 }
 
-onBeforeUnmount(stopResize)
+function handleKeydown(e) {
+  if (e.key === 'Escape' && isOpen.value) {
+    isOpen.value = false
+  }
+}
 
-const messages = ref([
-  {
-    role: 'assistant',
-    text: 'Olá! Sou o assistente GameRAG. Me diga o que você está procurando e vou recomendar jogos para você.',
-    games: [],
-  },
-])
+onMounted(() => window.addEventListener('keydown', handleKeydown))
+onBeforeUnmount(() => {
+  stopResize()
+  window.removeEventListener('keydown', handleKeydown)
+})
+
+const WELCOME_MESSAGE = {
+  role: 'assistant',
+  text: 'Olá! Sou o assistente GameRAG. Me diga o que você está procurando e vou recomendar jogos para você.',
+  games: [],
+  isError: false,
+}
+
+const messages = ref([{ ...WELCOME_MESSAGE }])
 
 function toggle() {
   isOpen.value = !isOpen.value
+}
+
+function clearMessages() {
+  messages.value = [{ ...WELCOME_MESSAGE }]
 }
 
 async function send() {
   const text = input.value.trim()
   if (!text || loading.value) return
 
-  messages.value.push({ role: 'user', text, games: [] })
+  messages.value.push({ role: 'user', text, games: [], isError: false })
   input.value = ''
   loading.value = true
   await scrollToBottom()
 
   try {
     const { data } = await api.post('/chat/', { message: text })
-    messages.value.push({ role: 'assistant', text: data.answer, games: data.games ?? [] })
+    messages.value.push({ role: 'assistant', text: data.answer, games: data.games ?? [], isError: false })
   } catch (err) {
-    const detail = err.response?.data?.error || 'Não foi possível obter uma resposta.'
-    messages.value.push({ role: 'assistant', text: detail, games: [] })
+    const detail = err.response?.data?.error || 'Não foi possível obter uma resposta. Tente novamente.'
+    messages.value.push({ role: 'assistant', text: detail, games: [], isError: true })
   } finally {
     loading.value = false
     await scrollToBottom()
@@ -127,16 +141,30 @@ async function scrollToBottom() {
             <span class="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 text-xs font-bold text-white">G</span>
             <span class="text-sm font-semibold text-slate-900 dark:text-white">Assistente GameRAG</span>
           </div>
-          <button
-            type="button"
-            aria-label="Fechar chat"
-            class="rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
-            @click="toggle"
-          >
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+          <div class="flex items-center gap-1">
+            <button
+              type="button"
+              aria-label="Limpar conversa"
+              title="Limpar conversa"
+              class="rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+              @click="clearMessages"
+            >
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              aria-label="Fechar chat"
+              title="Fechar (Esc)"
+              class="rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+              @click="toggle"
+            >
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         <!-- Messages -->
@@ -154,7 +182,9 @@ async function scrollToBottom() {
                 'max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed',
                 msg.role === 'user'
                   ? 'bg-sky-500 text-white'
-                  : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-100'
+                  : msg.isError
+                    ? 'border border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-400'
+                    : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-100'
               ]"
             >
               <p class="whitespace-pre-wrap">{{ msg.text }}</p>
@@ -183,13 +213,14 @@ async function scrollToBottom() {
         </div>
 
         <!-- Input -->
-        <div class="flex-shrink-0 border-t border-slate-200 bg-white px-3 py-3 dark:border-slate-800 dark:bg-slate-950">
+        <div class="flex-shrink-0 border-t border-slate-200 bg-white px-3 pb-3 pt-2 dark:border-slate-800 dark:bg-slate-950">
           <form class="flex gap-2" @submit.prevent="send">
             <input
               v-model="input"
               type="text"
               placeholder="Pergunte sobre jogos..."
               :disabled="loading"
+              :maxlength="MAX_INPUT"
               class="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500"
             />
             <button
@@ -203,6 +234,13 @@ async function scrollToBottom() {
               </svg>
             </button>
           </form>
+          <p
+            v-if="input.length > MAX_INPUT * 0.75"
+            class="mt-1 text-right text-xs"
+            :class="input.length >= MAX_INPUT ? 'text-rose-500' : 'text-slate-400'"
+          >
+            {{ input.length }}/{{ MAX_INPUT }}
+          </p>
         </div>
       </div>
     </transition>
