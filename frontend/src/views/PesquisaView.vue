@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 import Header from '@/components/Header.vue'
@@ -11,17 +11,29 @@ const router = useRouter()
 const auth = useAuthStore()
 
 const query = ref('')
+const ordering = ref('')
 const games = ref([])
-const status = ref('idle')
+const status = ref('loading')
 const errorMessage = ref('')
 
-async function search() {
-  const term = query.value.trim()
+const ORDER_OPTIONS = [
+  { value: '', label: 'Relevância' },
+  { value: 'title', label: 'Nome (A–Z)' },
+  { value: '-title', label: 'Nome (Z–A)' },
+  { value: '-rating', label: 'Melhor avaliação' },
+  { value: 'price', label: 'Menor preço' },
+  { value: '-price', label: 'Maior preço' },
+  { value: '-release_date', label: 'Mais recente' },
+]
 
+async function search() {
   status.value = 'loading'
   errorMessage.value = ''
   try {
-    const params = term ? { search: term } : {}
+    const params = {}
+    const term = query.value.trim()
+    if (term) params.search = term
+    if (ordering.value) params.ordering = ordering.value
     const { data } = await api.get('/games/', { params })
     games.value = Array.isArray(data) ? data : (data.results ?? [])
     status.value = games.value.length ? 'success' : 'no-results'
@@ -49,11 +61,7 @@ function openPesquisa() {
   router.push({ name: 'pesquisa' })
 }
 
-function formatPrice(value) {
-  const number = Number(value)
-  if (Number.isNaN(number)) return value
-  return number.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-}
+onMounted(search)
 </script>
 
 <template>
@@ -77,7 +85,7 @@ function formatPrice(value) {
         </div>
 
         <section class="mb-8">
-          <form class="grid gap-3 sm:grid-cols-[1.8fr_auto] sm:items-end" @submit.prevent="search" aria-label="Busca de jogos">
+          <form class="grid gap-3 sm:grid-cols-[1fr_auto_auto] sm:items-end" @submit.prevent="search" aria-label="Busca de jogos">
             <label class="sr-only" for="search-input">Buscar jogos por nome, gênero ou plataforma</label>
             <input
               id="search-input"
@@ -85,9 +93,18 @@ function formatPrice(value) {
               type="search"
               placeholder="Digite o nome do jogo, gênero ou plataforma"
               class="w-full px-5 py-4 rounded-2xl border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder-slate-500"
-              @keyup.enter="search"
               aria-label="Buscar jogos por nome, gênero ou plataforma"
             />
+            <select
+              v-model="ordering"
+              aria-label="Ordenar resultados"
+              class="w-full sm:w-auto px-4 py-4 rounded-2xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+              @change="search"
+            >
+              <option v-for="opt in ORDER_OPTIONS" :key="opt.value" :value="opt.value">
+                {{ opt.label }}
+              </option>
+            </select>
             <button
               type="submit"
               class="w-full sm:w-auto px-6 py-4 rounded-2xl bg-sky-500 hover:bg-sky-400 text-white font-semibold transition-all shadow-lg shadow-sky-500/20 dark:shadow-sky-500/20 disabled:opacity-60"
@@ -100,36 +117,20 @@ function formatPrice(value) {
       </section>
 
       <section aria-live="polite" aria-atomic="true" class="mt-6 min-h-[5rem] sm:mt-8">
-        <div
-          v-if="status === 'idle'"
-          role="status"
-          class="text-center text-slate-400 py-10"
-        >
-          Nenhum jogo carregado. Faça uma pesquisa para ver resultados.
+        <div v-if="status === 'loading'" role="status" class="flex flex-col items-center gap-3 py-14 text-slate-400">
+          <svg class="h-8 w-8 animate-spin" viewBox="0 0 24 24" fill="none">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+          </svg>
+          <span class="text-sm">Carregando jogos…</span>
         </div>
-        <div
-          v-else-if="status === 'loading'"
-          role="status"
-          class="text-center text-slate-400 py-10"
-        >
-          Buscando jogos para "{{ query }}"…
-        </div>
-        <div
-          v-else-if="status === 'error'"
-          class="text-center text-rose-400 py-10"
-        >
+        <div v-else-if="status === 'error'" class="text-center text-rose-400 py-10">
           {{ errorMessage }}
         </div>
-        <div
-          v-else-if="status === 'no-results'"
-          class="text-center text-slate-400 py-10"
-        >
-          Nenhum jogo encontrado para "{{ query }}".
+        <div v-else-if="status === 'no-results'" class="text-center text-slate-400 py-10">
+          Nenhum jogo encontrado{{ query.trim() ? ` para "${query.trim()}"` : '' }}.
         </div>
-        <div
-          v-else
-          class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3"
-        >
+        <div v-else class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
           <GameCard
             v-for="game in games"
             :key="game.id"
