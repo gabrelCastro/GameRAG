@@ -83,9 +83,22 @@ onMounted(loadProfile)
       </div>
 
       <section class="grid gap-4 sm:gap-6 lg:grid-cols-[1fr_1.4fr]">
+        <!-- User data card -->
         <div class="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950 dark:shadow-slate-950/20">
           <h2 class="text-xl font-semibold text-slate-950 dark:text-white mb-4">Dados do usuário</h2>
-          <div class="space-y-4 text-sm text-slate-600 dark:text-slate-300">
+
+          <div v-if="status === 'loading'" class="animate-pulse space-y-4">
+            <div>
+              <div class="mb-1 h-3 w-28 rounded bg-slate-200 dark:bg-slate-700"></div>
+              <div class="h-4 w-40 rounded bg-slate-200 dark:bg-slate-700"></div>
+            </div>
+            <div>
+              <div class="mb-1 h-3 w-16 rounded bg-slate-200 dark:bg-slate-700"></div>
+              <div class="h-4 w-52 rounded bg-slate-200 dark:bg-slate-700"></div>
+            </div>
+          </div>
+
+          <div v-else class="space-y-4 text-sm text-slate-600 dark:text-slate-300">
             <div>
               <p class="font-medium text-slate-900 dark:text-white">Nome de usuário</p>
               <p>{{ user.username || '—' }}</p>
@@ -97,6 +110,7 @@ onMounted(loadProfile)
           </div>
         </div>
 
+        <!-- Favorites card -->
         <div class="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950 dark:shadow-slate-950/20">
           <div class="flex items-center justify-between mb-4">
             <div>
@@ -105,8 +119,16 @@ onMounted(loadProfile)
             </div>
           </div>
 
-          <div v-if="status === 'loading'" class="text-slate-500 py-10 text-center">
-            Carregando favoritos...
+          <div v-if="status === 'loading'" class="animate-pulse space-y-4">
+            <div
+              v-for="i in 3"
+              :key="i"
+              class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900"
+            >
+              <div class="mb-2 h-4 w-3/4 rounded bg-slate-200 dark:bg-slate-700"></div>
+              <div class="mb-1 h-3 w-1/2 rounded bg-slate-200 dark:bg-slate-700"></div>
+              <div class="h-3 w-1/3 rounded bg-slate-200 dark:bg-slate-700"></div>
+            </div>
           </div>
           <div v-else-if="status === 'error'" class="text-rose-500 py-10 text-center">
             {{ errorMessage }}
