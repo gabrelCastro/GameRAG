@@ -2,20 +2,40 @@
 set -e
 
 echo "Aguardando o banco de dados..."
+DB_HOST=${DB_HOST:-db}
+DB_PORT=${DB_PORT:-5432}
+DB_NAME=${DB_NAME:-gamerag}
+DB_USER=${DB_USER:-gamerag}
+DB_PASSWORD=${DB_PASSWORD:-gamerag}
+
+# Retry logic com timeout mais longo
+RETRY_COUNT=0
+MAX_RETRIES=30
+
 until python -c "
-import os, psycopg2
-psycopg2.connect(
-    dbname=os.environ.get('DB_NAME', 'gamerag'),
-    user=os.environ.get('DB_USER', 'gamerag'),
-    password=os.environ.get('DB_PASSWORD', 'gamerag'),
-    host=os.environ.get('DB_HOST', 'db'),
-    port=os.environ.get('DB_PORT', '5432'),
-)
-" 2>/dev/null; do
-  echo "  banco ainda não disponível, tentando novamente..."
+import os, psycopg2, sys
+try:
+    psycopg2.connect(
+        dbname='${DB_NAME}',
+        user='${DB_USER}',
+        password='${DB_PASSWORD}',
+        host='${DB_HOST}',
+        port='${DB_PORT}',
+        connect_timeout=3
+    )
+    print('✅ Banco de dados pronto!', flush=True)
+except Exception as e:
+    print(f'❌ Erro: {e}', flush=True)
+    sys.exit(1)
+" 2>&1; do
+  RETRY_COUNT=$((RETRY_COUNT + 1))
+  if [ $RETRY_COUNT -gt $MAX_RETRIES ]; then
+    echo "Máximo de tentativas ($MAX_RETRIES) atingido. Abortando."
+    exit 1
+  fi
+  echo "  banco ainda não disponível, tentativa $RETRY_COUNT/$MAX_RETRIES..."
   sleep 2
 done
-echo "Banco de dados pronto."
 
 python manage.py migrate --noinput
 
