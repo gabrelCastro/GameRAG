@@ -4,6 +4,8 @@ from games.models import Game, GameFavorite, GameLibraryEntry, GameReview
 
 
 class GameSerializer(serializers.ModelSerializer):
+    has_embedding = serializers.SerializerMethodField()
+
     class Meta:
         model = Game
         fields = [
@@ -18,10 +20,20 @@ class GameSerializer(serializers.ModelSerializer):
             'release_date',
             'tags',
             'rating',
+            'has_embedding',
             'created_at',
             'updated_at',
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'has_embedding', 'created_at', 'updated_at']
+
+    def get_has_embedding(self, obj: Game) -> bool:
+        return obj.embedding is not None
+
+    def validate_title(self, value: str) -> str:
+        stripped = value.strip()
+        if not stripped:
+            raise serializers.ValidationError('O título não pode ser vazio.')
+        return stripped
 
     def validate_rating(self, value):
         if value < 0 or value > 10:

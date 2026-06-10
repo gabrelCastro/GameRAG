@@ -26,6 +26,8 @@ class Game(models.Model):
 
     class Meta:
         ordering = ['title']
+        verbose_name = 'Jogo'
+        verbose_name_plural = 'Jogos'
 
     def __str__(self):
         return f'{self.title} ({self.platform})'
@@ -41,6 +43,8 @@ class GameReview(models.Model):
     class Meta:
         ordering = ['-created_at']
         unique_together = ('game', 'user')
+        verbose_name = 'Avaliação'
+        verbose_name_plural = 'Avaliações'
 
     def __str__(self):
         return f'{self.user} → {self.game} ({self.rating}/10)'
@@ -54,6 +58,8 @@ class GameFavorite(models.Model):
     class Meta:
         ordering = ['-created_at']
         unique_together = ('game', 'user')
+        verbose_name = 'Favorito'
+        verbose_name_plural = 'Favoritos'
 
     def __str__(self):
         return f'{self.user} favoritou {self.game}'
@@ -87,6 +93,8 @@ class GameLibraryEntry(models.Model):
     class Meta:
         ordering = ['-updated_at']
         unique_together = ('game', 'user')
+        verbose_name = 'Entrada de Biblioteca'
+        verbose_name_plural = 'Entradas de Biblioteca'
 
     def __str__(self):
         return f'{self.user} - {self.game} ({self.status})'
