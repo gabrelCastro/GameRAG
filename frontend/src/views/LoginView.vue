@@ -30,15 +30,23 @@ function tabClass(tab) {
 
 async function onSubmit() {
   errorMessage.value = ''
+
+  if (currentTab.value === 'signup') {
+    if (signup.password.length < 8) {
+      errorMessage.value = 'A senha deve ter no mínimo 8 caracteres.'
+      return
+    }
+    if (signup.password !== signup.confirm) {
+      errorMessage.value = 'As senhas não coincidem.'
+      return
+    }
+  }
+
   submitting.value = true
   try {
     if (currentTab.value === 'login') {
       await auth.login({ username: login.username, password: login.password })
     } else {
-      if (signup.password !== signup.confirm) {
-        errorMessage.value = 'As senhas não coincidem.'
-        return
-      }
       await auth.register({
         username: signup.username,
         email: signup.email,
@@ -48,8 +56,19 @@ async function onSubmit() {
     router.push({ name: 'pesquisa' })
   } catch (err) {
     const data = err.response?.data
-    const fieldErrors = data ? Object.values(data).flat().join(' ') : ''
-    errorMessage.value = data?.detail || fieldErrors || 'Não foi possível concluir a operação.'
+    if (data?.detail) {
+      errorMessage.value = data.detail
+    } else if (data && typeof data === 'object') {
+      const fieldLabels = { username: 'Usuário', email: 'E-mail', password: 'Senha', non_field_errors: '' }
+      const messages = Object.entries(data)
+        .flatMap(([field, errors]) => {
+          const label = fieldLabels[field] ?? field
+          return errors.map((e) => (label ? `${label}: ${e}` : e))
+        })
+      errorMessage.value = messages.join(' ') || 'Não foi possível concluir a operação.'
+    } else {
+      errorMessage.value = 'Não foi possível concluir a operação.'
+    }
   } finally {
     submitting.value = false
   }
@@ -207,7 +226,7 @@ const labelClass = 'block text-sm font-medium mb-2 text-gray-700 dark:text-gray-
           type="submit"
           :disabled="submitting"
           class="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold rounded-lg transition-all transform hover:scale-105 active:scale-95 shadow-lg disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
-          aria-busy="submitting"
+          :aria-busy="submitting"
         >
           {{ submitting ? 'Aguarde…' : submitLabel }}
         </button>
