@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 import Header from '@/components/Header.vue'
+import GameCard from '@/components/GameCard.vue'
 import api from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
 
@@ -114,17 +115,12 @@ onMounted(loadProfile)
               Você ainda não tem jogos favoritados.
             </div>
             <ul v-else class="space-y-4">
-              <li
-                v-for="game in favorites"
-                :key="game.id"
-                class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900"
-              >
-                <p class="text-lg font-semibold text-slate-950 dark:text-white">{{ game.title }}</p>
-                <p class="mt-2 text-slate-600 dark:text-slate-400 line-clamp-2">{{ game.description }}</p>
-                <div class="mt-3 flex flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-400">
-                  <span class="rounded-full bg-slate-100 px-2 py-1 dark:bg-slate-800">{{ game.genre }}</span>
-                  <span class="rounded-full bg-slate-100 px-2 py-1 dark:bg-slate-800">{{ game.platform }}</span>
-                </div>
+              <li v-for="game in favorites" :key="game.id">
+                <GameCard
+                  class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900"
+                  :game="game"
+                  :show-price="false"
+                />
               </li>
             </ul>
           </div>

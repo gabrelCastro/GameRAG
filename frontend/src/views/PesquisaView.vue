@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import Header from '@/components/Header.vue'
+import GameCard from '@/components/GameCard.vue'
 import api from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
 
@@ -134,22 +135,11 @@ function formatPrice(value) {
           v-else
           class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3"
         >
-          <article
+          <GameCard
             v-for="game in games"
             :key="game.id"
-            class="flex flex-col gap-4 p-6 rounded-[1.75rem] bg-white border border-slate-200 shadow-lg shadow-slate-950/10 dark:bg-slate-950 dark:border-slate-800 dark:shadow-slate-950/40"
-          >
-            <h2 class="text-lg font-semibold text-slate-950 dark:text-white">{{ game.title }}</h2>
-            <p class="text-sm text-slate-600 dark:text-slate-400 line-clamp-4">
-              {{ game.description }}
-            </p>
-            <div
-              class="flex flex-col gap-3 mt-auto text-slate-500 text-xs sm:text-sm dark:text-slate-400"
-            >
-              <span class="font-medium text-slate-700 dark:text-slate-300">{{ game.genre }} · {{ game.platform }}</span>
-              <span class="text-sky-500 font-semibold dark:text-sky-400">{{ formatPrice(game.price) }}</span>
-            </div>
-          </article>
+            :game="game"
+          />
         </div>
       </section>
     </main>
