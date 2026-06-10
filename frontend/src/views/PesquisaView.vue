@@ -17,16 +17,12 @@ const errorMessage = ref('')
 
 async function search() {
   const term = query.value.trim()
-  if (!term) {
-    games.value = []
-    status.value = 'empty-query'
-    return
-  }
 
   status.value = 'loading'
   errorMessage.value = ''
   try {
-    const { data } = await api.get('/games/', { params: { search: term } })
+    const params = term ? { search: term } : {}
+    const { data } = await api.get('/games/', { params })
     games.value = Array.isArray(data) ? data : (data.results ?? [])
     status.value = games.value.length ? 'success' : 'no-results'
   } catch (err) {
