@@ -61,9 +61,10 @@ onMounted(loadProfile)
       @profile-click="openProfile"
       @settings-click="openSettings"
       @logout="logout"
+      @pesquisa="goBack"
     />
 
-    <main class="max-w-6xl mx-auto px-4 py-10 sm:px-6 lg:px-8">
+    <main class="max-w-6xl mx-auto px-4 py-6 sm:px-6 sm:py-10 lg:px-8">
       <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8">
         <div>
           <p class="text-sm uppercase tracking-[0.25em] text-sky-500 dark:text-sky-400 mb-2">Perfil</p>
@@ -81,7 +82,7 @@ onMounted(loadProfile)
         </button>
       </div>
 
-      <section class="grid gap-6 lg:grid-cols-[1fr_1.4fr]">
+      <section class="grid gap-4 sm:gap-6 lg:grid-cols-[1fr_1.4fr]">
         <div class="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950 dark:shadow-slate-950/20">
           <h2 class="text-xl font-semibold text-slate-950 dark:text-white mb-4">Dados do usuário</h2>
           <div class="space-y-4 text-sm text-slate-600 dark:text-slate-300">

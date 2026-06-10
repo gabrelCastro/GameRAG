@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch, onBeforeUnmount, onMounted } from 'vue'
+import { computed, ref, watch, onBeforeUnmount } from 'vue'
 import api from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
 
@@ -188,14 +188,14 @@ onBeforeUnmount(() => {
   <Teleport to="body">
     <div
       v-if="isDetailsOpen"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4"
+      class="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/70 sm:items-center sm:p-4"
       @click.self="closeDetails"
     >
       <section
         role="dialog"
         aria-modal="true"
         :aria-labelledby="`game-details-title-${game.id}`"
-        class="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-[1.75rem] bg-white p-6 shadow-2xl dark:bg-slate-950"
+        class="max-h-[92vh] w-full overflow-y-auto rounded-t-[1.75rem] bg-white p-4 shadow-2xl dark:bg-slate-950 sm:max-w-4xl sm:rounded-[1.75rem] sm:p-6"
       >
         <!-- Header -->
         <div class="flex items-start justify-between gap-4 border-b border-slate-200 pb-4 dark:border-slate-800">
@@ -253,7 +253,7 @@ onBeforeUnmount(() => {
         </div>
 
         <!-- Main Content -->
-        <div class="mt-6 grid gap-6 lg:grid-cols-3">
+        <div class="mt-6 grid gap-6 lg:grid-cols-3 lg:items-start">
           <!-- Left Column: Game Info -->
           <div class="space-y-5 lg:col-span-1">
             <div>

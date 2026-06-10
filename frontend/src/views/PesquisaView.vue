@@ -66,7 +66,7 @@ function formatPrice(value) {
       @pesquisa="openPesquisa"
     />
     <main id="search-page" aria-labelledby="search-heading" class="max-w-6xl mx-auto px-4 py-10 sm:px-6 lg:px-8">
-      <section class="mx-auto w-full max-w-4xl rounded-[2rem] border border-slate-200/40 bg-white/90 p-6 shadow-xl shadow-slate-950/10 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95 dark:shadow-slate-950/40">
+      <section class="mx-auto w-full max-w-4xl rounded-2xl border border-slate-200/40 bg-white/90 p-4 shadow-xl shadow-slate-950/10 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95 dark:shadow-slate-950/40 sm:rounded-[2rem] sm:p-6">
         <div class="text-center mb-8">
           <p class="text-sm uppercase tracking-[0.3em] text-slate-500 dark:text-sky-400/80 mb-3">Pesquisa de Jogos</p>
           <h1 id="search-heading" class="text-4xl sm:text-5xl font-semibold text-slate-950 dark:text-white mb-3">Encontre seu próximo jogo</h1>
@@ -99,19 +99,13 @@ function formatPrice(value) {
         </section>
       </section>
 
-      <section aria-live="polite" aria-atomic="true" class="min-h-[5rem] mt-8">
+      <section aria-live="polite" aria-atomic="true" class="mt-6 min-h-[5rem] sm:mt-8">
         <div
           v-if="status === 'idle'"
           role="status"
           class="text-center text-slate-400 py-10"
         >
           Nenhum jogo carregado. Faça uma pesquisa para ver resultados.
-        </div>
-        <div
-          v-else-if="status === 'empty-query'"
-          class="text-center text-slate-400 py-10"
-        >
-          Digite um termo de pesquisa para buscar jogos.
         </div>
         <div
           v-else-if="status === 'loading'"
