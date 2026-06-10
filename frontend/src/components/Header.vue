@@ -5,7 +5,13 @@
   >
   
   <div class="flex items-center justify-between w-full gap-3 sm:w-auto">
-    <h1 class="text-xl font-semibold">GameRAG</h1>
+    <button
+      type="button"
+      @click="selectMenu('pesquisa')"
+      class="flex items-center gap-2"
+    >
+      <h1 class="text-xl font-semibold">GameRAG</h1>
+    </button>
   </div>
     <div class="flex flex-wrap items-center justify-end gap-3 w-full sm:w-auto">
       <ThemeToggle class="inline-flex" />
@@ -72,7 +78,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['profile-click', 'settings-click', 'logout'])
+const emit = defineEmits(['profile-click', 'settings-click', 'logout', 'pesquisa'])
 
 const showMenu = ref(false)
 
@@ -96,5 +102,6 @@ function selectMenu(action) {
   if (action === 'profile') emit('profile-click')
   if (action === 'settings') emit('settings-click')
   if (action === 'logout') emit('logout')
+  if (action === 'pesquisa') emit('pesquisa')
 }
 </script>

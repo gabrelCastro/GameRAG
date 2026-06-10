@@ -49,6 +49,10 @@ function openSettings() {
   router.push({ name: 'configuracoes' })
 }
 
+function openPesquisa() {
+  router.push({ name: 'pesquisa' })
+}
+
 function formatPrice(value) {
   const number = Number(value)
   if (Number.isNaN(number)) return value
@@ -63,6 +67,7 @@ function formatPrice(value) {
       @profile-click="openProfile"
       @settings-click="openSettings"
       @logout="logout"
+      @pesquisa="openPesquisa"
     />
     <main id="search-page" aria-labelledby="search-heading" class="max-w-6xl mx-auto px-4 py-10 sm:px-6 lg:px-8">
       <section class="mx-auto w-full max-w-4xl rounded-[2rem] border border-slate-200/40 bg-white/90 p-6 shadow-xl shadow-slate-950/10 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95 dark:shadow-slate-950/40">
