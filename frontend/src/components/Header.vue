@@ -1,34 +1,34 @@
 <template>
   <header
     role="banner"
-    class="w-full flex flex-col gap-3 px-4 py-4 bg-white text-slate-900 border-b border-gray-200 dark:bg-slate-950 dark:text-slate-100 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between sm:px-5"
+    class="w-full flex items-center justify-between px-4 py-3 bg-white text-slate-900 border-b border-gray-200 dark:bg-slate-950 dark:text-slate-100 dark:border-slate-800 sm:px-5"
   >
-  
-  <div class="flex items-center justify-between w-full gap-3 sm:w-auto">
+    <!-- Logo -->
     <button
       type="button"
       @click="selectMenu('pesquisa')"
-      class="flex items-center gap-2"
+      class="flex items-center gap-2 shrink-0"
     >
       <h1 class="text-xl font-semibold">GameRAG</h1>
     </button>
-  </div>
-    <div class="flex flex-wrap items-center justify-end gap-3 w-full sm:w-auto">
-      <ThemeToggle class="inline-flex" />
+
+    <!-- Ações -->
+    <div class="flex items-center gap-2 sm:gap-3">
+      <ThemeToggle class="inline-flex shrink-0" />
 
       <div class="relative">
         <button
-          class="inline-flex items-center gap-3 px-3 py-2 rounded-full bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100 transition hover:bg-slate-200 dark:hover:bg-slate-700"
+          class="inline-flex items-center gap-2 px-2 py-1.5 sm:px-3 sm:py-2 rounded-full bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100 transition hover:bg-slate-200 dark:hover:bg-slate-700"
           type="button"
           @click.stop="toggleMenu"
           :aria-expanded="showMenu"
           aria-haspopup="menu"
           aria-label="Abrir menu de usuário"
         >
-          <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-indigo-600 text-white font-semibold">
+          <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-indigo-600 text-white font-semibold shrink-0">
             {{ initials }}
           </span>
-          <span class="text-sm font-medium truncate max-w-[8rem]">{{ displayName }}</span>
+          <span class="hidden sm:inline text-sm font-medium truncate max-w-[8rem]">{{ displayName }}</span>
         </button>
 
         <div
