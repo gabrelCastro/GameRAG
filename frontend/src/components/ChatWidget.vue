@@ -1,19 +1,38 @@
 <script setup>
-import { ref, nextTick, onMounted, onBeforeUnmount } from 'vue'
+import { ref, nextTick, onMounted, onBeforeUnmount, computed } from 'vue'
 import api from '@/services/api'
 
 const isOpen = ref(false)
 const input = ref('')
 const loading = ref(false)
 const messagesEl = ref(null)
+const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 0)
+const windowHeight = ref(typeof window !== 'undefined' ? window.innerHeight : 0)
 
 const MAX_INPUT = 400
 
+// Dimensões responsivas baseadas no viewport
+const isMobile = computed(() => windowWidth.value < 768)
+const isSmallScreen = computed(() => windowWidth.value < 640)
+
+const defaultWidth = computed(() => {
+  if (isSmallScreen.value) return Math.min(windowWidth.value - 32, 320)
+  if (isMobile.value) return Math.min(windowWidth.value - 40, 380)
+  return 420
+})
+
+const defaultHeight = computed(() => {
+  if (isSmallScreen.value) return Math.min(windowHeight.value - 120, 480)
+  if (isMobile.value) return Math.min(windowHeight.value - 80, 520)
+  return 560
+})
+
 const width = ref(420)
 const height = ref(560)
-const MIN_W = 300
-const MIN_H = 380
-const MAX_W = 800
+
+const MIN_W = computed(() => isSmallScreen.value ? 280 : 300)
+const MIN_H = computed(() => isSmallScreen.value ? 320 : 380)
+const MAX_W = computed(() => isSmallScreen.value ? windowWidth.value - 16 : 800)
 
 let resizing = false
 let startX = 0
@@ -22,6 +41,7 @@ let startW = 0
 let startH = 0
 
 function startResize(e) {
+  if (isMobile.value) return // Desabilitar redimensionamento em mobile
   resizing = true
   startX = e.clientX
   startY = e.clientY
@@ -34,8 +54,8 @@ function startResize(e) {
 
 function onResize(e) {
   if (!resizing) return
-  width.value  = Math.max(MIN_W, Math.min(MAX_W, startW + (startX - e.clientX)))
-  height.value = Math.max(MIN_H, Math.min(window.innerHeight * 0.88, startH + (startY - e.clientY)))
+  width.value = Math.max(MIN_W.value, Math.min(MAX_W.value, startW + (startX - e.clientX)))
+  height.value = Math.max(MIN_H.value, Math.min(windowHeight.value * 0.85, startH + (startY - e.clientY)))
 }
 
 function stopResize() {
@@ -50,10 +70,30 @@ function handleKeydown(e) {
   }
 }
 
-onMounted(() => window.addEventListener('keydown', handleKeydown))
+function handleWindowResize() {
+  windowWidth.value = window.innerWidth
+  windowHeight.value = window.innerHeight
+
+  // Ajustar dimensões do painel quando a janela é redimensionada
+  if (isMobile.value) {
+    width.value = defaultWidth.value
+    height.value = defaultHeight.value
+  }
+}
+
+onMounted(() => {
+  // Inicializar com valores responsivos
+  width.value = defaultWidth.value
+  height.value = defaultHeight.value
+
+  window.addEventListener('keydown', handleKeydown)
+  window.addEventListener('resize', handleWindowResize)
+})
+
 onBeforeUnmount(() => {
   stopResize()
   window.removeEventListener('keydown', handleKeydown)
+  window.removeEventListener('resize', handleWindowResize)
 })
 
 const WELCOME_MESSAGE = {
@@ -103,7 +143,7 @@ async function scrollToBottom() {
 </script>
 
 <template>
-  <div class="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-3">
+  <div class="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-2 sm:gap-3 p-2 sm:p-0">
     <!-- Panel -->
     <transition
       enter-active-class="transition duration-200 ease-out"
@@ -118,38 +158,39 @@ async function scrollToBottom() {
         class="relative flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-950/20 dark:border-slate-800 dark:bg-slate-950"
         :style="{ width: width + 'px', height: height + 'px' }"
       >
-        <!-- Resize handle — canto superior-esquerdo -->
+        <!-- Resize handle — apenas em desktop -->
         <div
-          class="absolute left-0 top-0 z-10 h-5 w-5 cursor-nw-resize"
+          v-if="!isMobile"
+          class="absolute left-0 top-0 z-10 h-5 w-5 cursor-nw-resize transition-opacity hover:opacity-100 opacity-60"
           title="Arraste para redimensionar"
           @mousedown="startResize"
         >
           <!-- grip dots -->
           <svg class="h-4 w-4 text-slate-300 dark:text-slate-700" viewBox="0 0 16 16" fill="currentColor">
-            <circle cx="4" cy="4" r="1.5"/>
-            <circle cx="8" cy="4" r="1.5"/>
-            <circle cx="4" cy="8" r="1.5"/>
-            <circle cx="8" cy="8" r="1.5"/>
-            <circle cx="4" cy="12" r="1.5"/>
-            <circle cx="8" cy="12" r="1.5"/>
+            <circle cx="4" cy="4" r="1.5" />
+            <circle cx="8" cy="4" r="1.5" />
+            <circle cx="4" cy="8" r="1.5" />
+            <circle cx="8" cy="8" r="1.5" />
+            <circle cx="4" cy="12" r="1.5" />
+            <circle cx="8" cy="12" r="1.5" />
           </svg>
         </div>
 
         <!-- Header -->
-        <div class="flex flex-shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-950">
-          <div class="flex items-center gap-2">
-            <span class="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 text-xs font-bold text-white">G</span>
-            <span class="text-sm font-semibold text-slate-900 dark:text-white">Assistente GameRAG</span>
+        <div class="flex flex-shrink-0 items-center justify-between border-b border-slate-200 bg-white px-3 sm:px-4 py-2 sm:py-3 dark:border-slate-800 dark:bg-slate-950">
+          <div class="flex items-center gap-1.5 sm:gap-2 min-w-0">
+            <span class="flex h-6 w-6 sm:h-7 sm:w-7 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 text-xs font-bold text-white">G</span>
+            <span class="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white truncate">Assistente GameRAG</span>
           </div>
-          <div class="flex items-center gap-1">
+          <div class="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
             <button
               type="button"
               aria-label="Limpar conversa"
               title="Limpar conversa"
-              class="rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+              class="rounded-lg p-1.5 sm:p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
               @click="clearMessages"
             >
-              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="h-3.5 w-3.5 sm:h-4 sm:w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
             </button>
@@ -157,10 +198,10 @@ async function scrollToBottom() {
               type="button"
               aria-label="Fechar chat"
               title="Fechar (Esc)"
-              class="rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+              class="rounded-lg p-1.5 sm:p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
               @click="toggle"
             >
-              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="h-3.5 w-3.5 sm:h-4 sm:w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -170,7 +211,7 @@ async function scrollToBottom() {
         <!-- Messages -->
         <div
           ref="messagesEl"
-          class="flex-1 space-y-3 overflow-y-auto px-4 py-3"
+          class="flex-1 space-y-2 sm:space-y-3 overflow-y-auto px-3 sm:px-4 py-2 sm:py-3"
         >
           <div
             v-for="(msg, i) in messages"
@@ -179,7 +220,7 @@ async function scrollToBottom() {
           >
             <div
               :class="[
-                'max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed',
+                'max-w-[90%] sm:max-w-[85%] rounded-2xl px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm leading-relaxed',
                 msg.role === 'user'
                   ? 'bg-sky-500 text-white'
                   : msg.isError
@@ -187,12 +228,12 @@ async function scrollToBottom() {
                     : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-100'
               ]"
             >
-              <p class="whitespace-pre-wrap">{{ msg.text }}</p>
-              <div v-if="msg.games && msg.games.length" class="mt-2 flex flex-wrap gap-1">
+              <p class="whitespace-pre-wrap break-words">{{ msg.text }}</p>
+              <div v-if="msg.games && msg.games.length" class="mt-1 sm:mt-2 flex flex-wrap gap-1">
                 <span
                   v-for="game in msg.games"
                   :key="game.id"
-                  class="inline-block rounded-full bg-white/20 px-2 py-0.5 text-xs font-medium"
+                  class="inline-block rounded-full bg-white/20 px-1.5 sm:px-2 py-0.5 text-xs font-medium truncate"
                 >
                   {{ game.title }}
                 </span>
@@ -202,34 +243,34 @@ async function scrollToBottom() {
 
           <!-- Loading indicator -->
           <div v-if="loading" class="flex justify-start">
-            <div class="rounded-2xl bg-slate-100 px-4 py-3 dark:bg-slate-800">
+            <div class="rounded-2xl bg-slate-100 px-3 sm:px-4 py-2 sm:py-3 dark:bg-slate-800">
               <span class="flex gap-1">
-                <span class="h-2 w-2 animate-bounce rounded-full bg-slate-400 [animation-delay:-0.3s]"></span>
-                <span class="h-2 w-2 animate-bounce rounded-full bg-slate-400 [animation-delay:-0.15s]"></span>
-                <span class="h-2 w-2 animate-bounce rounded-full bg-slate-400"></span>
+                <span class="h-1.5 w-1.5 sm:h-2 sm:w-2 animate-bounce rounded-full bg-slate-400 [animation-delay:-0.3s]"></span>
+                <span class="h-1.5 w-1.5 sm:h-2 sm:w-2 animate-bounce rounded-full bg-slate-400 [animation-delay:-0.15s]"></span>
+                <span class="h-1.5 w-1.5 sm:h-2 sm:w-2 animate-bounce rounded-full bg-slate-400"></span>
               </span>
             </div>
           </div>
         </div>
 
         <!-- Input -->
-        <div class="flex-shrink-0 border-t border-slate-200 bg-white px-3 pb-3 pt-2 dark:border-slate-800 dark:bg-slate-950">
-          <form class="flex gap-2" @submit.prevent="send">
+        <div class="flex-shrink-0 border-t border-slate-200 bg-white px-2 sm:px-3 pb-2 sm:pb-3 pt-1.5 sm:pt-2 dark:border-slate-800 dark:bg-slate-950">
+          <form class="flex gap-1.5 sm:gap-2" @submit.prevent="send">
             <input
               v-model="input"
               type="text"
               placeholder="Pergunte sobre jogos..."
               :disabled="loading"
               :maxlength="MAX_INPUT"
-              class="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500"
+              class="flex-1 rounded-lg sm:rounded-xl border border-slate-300 bg-white px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500"
             />
             <button
               type="submit"
               :disabled="loading || !input.trim()"
               aria-label="Enviar mensagem"
-              class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-sky-500 text-white transition hover:bg-sky-400 disabled:opacity-50"
+              class="flex h-8 w-8 sm:h-9 sm:w-9 flex-shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-sky-500 text-white transition hover:bg-sky-400 disabled:opacity-50"
             >
-              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="h-3.5 w-3.5 sm:h-4 sm:w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
               </svg>
             </button>
@@ -249,13 +290,13 @@ async function scrollToBottom() {
     <button
       type="button"
       :aria-label="isOpen ? 'Fechar assistente' : 'Abrir assistente de jogos'"
-      class="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 text-white shadow-lg shadow-indigo-500/30 transition hover:scale-105 active:scale-95"
+      class="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 text-white shadow-lg shadow-indigo-500/30 transition hover:scale-105 active:scale-95 flex-shrink-0"
       @click="toggle"
     >
-      <svg v-if="!isOpen" class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg v-if="!isOpen" class="h-5 w-5 sm:h-6 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
       </svg>
-      <svg v-else class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg v-else class="h-5 w-5 sm:h-6 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
       </svg>
     </button>
