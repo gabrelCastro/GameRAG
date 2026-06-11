@@ -30,6 +30,18 @@ const isSavingReview = ref(false)
 const newRating = ref(5)
 const newComment = ref('')
 const favoriteLoading = ref(false)
+const libraryEntry = ref(null)
+const libraryLoading = ref(false)
+const libraryError = ref('')
+const statusOptions = [
+  { value: 'want_to_play', label: 'Quero jogar' },
+  { value: 'playing', label: 'Jogando' },
+  { value: 'completed', label: 'Concluído' },
+  { value: 'dropped', label: 'Abandonado' },
+]
+const selectedStatus = ref('want_to_play')
+const hoursPlayed = ref(0)
+const isSavingLibrary = ref(false)
 
 const formattedPrice = computed(() => {
   const value = props.game?.price
@@ -41,6 +53,10 @@ const formattedPrice = computed(() => {
     style: 'currency',
     currency: 'BRL',
   })
+})
+
+const currentLibraryStatusLabel = computed(() => {
+  return statusOptions.find((item) => item.value === selectedStatus.value)?.label || 'Quero jogar'
 })
 
 const averageRating = computed(() => {
@@ -64,6 +80,40 @@ async function loadReviews() {
     reviewsError.value = 'Não foi possível carregar os reviews.'
   } finally {
     reviewsLoading.value = false
+  }
+}
+
+async function loadLibraryEntry() {
+  libraryLoading.value = true
+  libraryError.value = ''
+  try {
+    const { data } = await api.get('/games/library/')
+    const entry = data.find((item) => item.game.id === props.game.id) || null
+    libraryEntry.value = entry
+
+    selectedStatus.value = entry?.status ?? 'want_to_play'
+    hoursPlayed.value = Number(entry?.hours_played ?? 0)
+  } catch (err) {
+    libraryError.value = 'Não foi possível carregar seu progresso.'
+  } finally {
+    libraryLoading.value = false
+  }
+}
+
+async function saveLibraryEntry() {
+  isSavingLibrary.value = true
+  libraryError.value = ''
+  try {
+    const payload = {
+      status: selectedStatus.value,
+      hours_played: hoursPlayed.value,
+    }
+    const { data } = await api.post(`/games/${props.game.id}/library/`, payload)
+    libraryEntry.value = data
+  } catch (err) {
+    libraryError.value = err.response?.data?.detail || 'Erro ao salvar seu progresso.'
+  } finally {
+    isSavingLibrary.value = false
   }
 }
 
@@ -123,6 +173,7 @@ function openDetails() {
   isDetailsOpen.value = true
   loadReviews()
   checkFavorited()
+  loadLibraryEntry()
 }
 
 function closeDetails() {
@@ -325,8 +376,75 @@ onBeforeUnmount(() => {
                   </span>
                 </div>
               </div>
+
+              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
+                <div class="flex items-center justify-between gap-3">
+                  <div>
+                    <h3 class="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">
+                      Meu progresso
+                    </h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">
+                      Atualize seu status e horas jogadas no jogo.
+                    </p>
+                  </div>
+                  <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                    {{ currentLibraryStatusLabel }}
+                  </span>
+                </div>
+
+                <div class="mt-4 space-y-4">
+                  <div>
+                    <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Status
+                    </label>
+                    <select
+                      v-model="selectedStatus"
+                      class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                    >
+                      <option
+                        v-for="option in statusOptions"
+                        :key="option.value"
+                        :value="option.value"
+                      >
+                        {{ option.label }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Horas jogadas
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      v-model.number="hoursPlayed"
+                      class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                    />
+                  </div>
+
+                  <div class="flex flex-col gap-2">
+                    <button
+                      type="button"
+                      :disabled="isSavingLibrary || libraryLoading"
+                      class="rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-600 disabled:opacity-60 dark:bg-sky-600 dark:hover:bg-sky-700"
+                      @click="saveLibraryEntry"
+                    >
+                      {{ isSavingLibrary ? 'Salvando...' : 'Salvar progresso' }}
+                    </button>
+
+                    <p v-if="libraryError" class="text-sm text-red-600 dark:text-red-400">
+                      {{ libraryError }}
+                    </p>
+                    <p v-else-if="libraryLoading" class="text-sm text-slate-500 dark:text-slate-400">
+                      Carregando seu progresso...
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+          </div> <!-- ← ADICIONADO: fecha lg:col-span-1 -->
 
           <!-- Right Column: Reviews and Rating Form -->
           <div class="space-y-5 lg:col-span-2">
@@ -436,8 +554,8 @@ onBeforeUnmount(() => {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+          </div> <!-- fecha lg:col-span-2 -->
+        </div> <!-- ← ADICIONADO: fecha o grid principal -->
       </section>
     </div>
   </Teleport>
